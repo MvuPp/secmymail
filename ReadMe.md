@@ -1,5 +1,3 @@
-# Projet Exemple
-
 ## Etudiants
 - **MvuPp** [mail]
 - **Schell Yanis** [mail]
