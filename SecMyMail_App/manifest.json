@@ -34,9 +34,8 @@
         "messagesModify"
     ],
     "background": {
-        "scripts": ["background/background.js"]  
+        "scripts": ["background/background.js"]
     },
-
     "options_ui": {
         "page": "views/balise/balise.html",
         "open_in_tab": true
