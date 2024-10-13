@@ -12,13 +12,8 @@
     },
     "action": {
         "default_icon": "icons/icon.svg",
-        "default_popup": "views/popup/popup.html",
+        "default_popup": "views/popup.html",
         "default_title": "SecMyMail"
-    },
-    "message_display_action": {
-        "default_popup": "views/popup/popup.html",
-        "default_title": "Details",
-        "default_icon": "icons/icon.svg"
     },
     "permissions": [
         "messagesRead",
@@ -33,9 +28,6 @@
         "notifications",
         "messagesModify"
     ],
-    "background": {
-        "scripts": ["background/background.js"]
-    },
     "options_ui": {
         "page": "views/balise/balise.html",
         "open_in_tab": true
