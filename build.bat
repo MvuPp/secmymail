@@ -1,15 +1,14 @@
 @echo off
 
 set OUTPUT=build\secmymail.xpi
-set SOURCE_DIR=SecMyMail_App
+set FILES=manifest.json assets pages scripts styles
 
-if not exist "%~dp0%OUTPUT%" mkdir "%~dp0%OUTPUT%"
+if not exist build mkdir build
+if exist %OUTPUT% del %OUTPUT%
 
-if exist "%OUTPUT%" del /f "%OUTPUT%"
+powershell -Command "Compress-Archive -Path %FILES% -DestinationPath %OUTPUT%"
 
-powershell -Command "Compress-Archive -Path '%SOURCE_DIR%\*' -DestinationPath '%OUTPUT%'"
-
-if %errorlevel% equ 0 (
+if %ERRORLEVEL% equ 0 (
     echo.
     echo Build successful. The add-on has been created in %OUTPUT%
 ) else (

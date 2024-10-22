@@ -11,14 +11,14 @@
         }
     },
     "action": {
-        "default_icon": "icons/icon.svg",
-        "default_popup": "views/popup/popup.html",
+        "default_icon": "assets/icon.svg",
+        "default_popup": "pages/popup.html",
         "default_title": "SecMyMail"
     },
     "message_display_action": {
-        "default_popup": "views/popup/popup.html",
+        "default_popup": "pages/popup.html",
         "default_title": "Details",
-        "default_icon": "icons/icon.svg"
+        "default_icon": "assets/icon.svg"
     },
     "permissions": [
         "messagesRead",
@@ -31,20 +31,21 @@
         "accountsRead",
         "menus",
         "notifications",
-        "messagesModify"
+        "messagesModify",
+        "storage"
     ],
     "background": {
-        "scripts": ["background/background.js"]
+        "scripts": ["scripts/background.js"]
     },
     "options_ui": {
-        "page": "views/balise/balise.html",
+        "page": "pages/balise.html",
         "open_in_tab": true
     },
     "icons": {
-        "16": "icons/icon.svg",
-        "32": "icons/icon.svg",
-        "48": "icons/icon.svg",
-        "64": "icons/icon.svg",
-        "128": "icons/icon.svg"
+        "16": "assets/icon.svg",
+        "32": "assets/icon.svg",
+        "48": "assets/icon.svg",
+        "64": "assets/icon.svg",
+        "128": "assets/icon.svg"
     }
 }
