@@ -1,0 +1,76 @@
+input[type="text"], button {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+    background-color: #444;
+    color: white;
+}
+
+input[type="text"]:focus, button:focus {
+    outline: none;
+    border-color: #ff8c00;
+    box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.2);
+}
+
+button {
+    background-color: #FFA500;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #ff8c00;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper input[type="text"] {
+    flex: 1;
+    padding: 3px;
+    transition: border-color 0.2s;
+    border: 1px solid #555;
+    border-radius: 3px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+}
+
+.input-wrapper input[type="text"]::placeholder {
+    color: #888;
+}
+
+.input-wrapper input[type="text"]:hover {
+    border-color: #ff8c00;
+}
+
+.input-wrapper button {
+    position: absolute;
+    right: -5px;
+    top: 10%;
+    transform: translateY(-50%);
+    background-color: #ff4d4dcb;
+    color: white;
+    border: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 25px;
+    text-align: center;
+    display: none;
+    cursor: pointer;
+    padding: 0px;
+}
+
+.input-wrapper:hover button {
+    display: block;
+}
