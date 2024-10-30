@@ -1,6 +1,5 @@
 // Script commun à toutes les pages
 
-
 // Button links
 function linkButton(button) {
     button.addEventListener("click", function() {
@@ -15,8 +14,6 @@ document.addEventListener("DOMContentLoaded", function() {
 document.querySelectorAll("button[link]").forEach(function(button) {
     linkButton(button);
 });
-
-
 
 
 // Templates
