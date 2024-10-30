@@ -1,0 +1,53 @@
+{
+    "manifest_version": 3,
+    "name": "SecMyMail",
+    "description": "Greffon Thunderbird pour améliorer la sécurité en identifiant les messages suspects et les courriels provenant de domaines non autorisés.",
+    "version": "1.0",
+    "author": "MailArmor",
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "secmymail@mailarmor.com",
+            "strict_min_version": "128.0"
+        }
+    },
+    "action": {
+        "default_icon": "assets/icon.svg",
+        "default_popup": "pages/popup.html",
+        "default_title": "SecMyMail"
+    },
+    "message_display_action": {
+        "default_popup": "pages/popup.html",
+        "default_title": "Details",
+        "default_icon": "assets/icon.svg"
+    },
+    "permissions": [
+        "messagesRead",
+        "storage",
+        "webRequest",
+        "activeTab",
+        "compose",
+        "tabs",
+        "messagesUpdate",
+        "accountsRead",
+        "menus",
+        "notifications",
+        "messagesModify",
+        "storage"
+    ],
+    "background": {
+        "scripts": ["scripts/background.js"],
+        "type": "module"
+
+    },
+    "options_ui": {
+        "page": "pages/balise.html",
+        "open_in_tab": true
+    },
+    "icons": {
+        "16": "assets/icon.svg",
+        "32": "assets/icon.svg",
+        "48": "assets/icon.svg",
+        "64": "assets/icon.svg",
+        "128": "assets/icon.svg"
+    }
+}

@@ -1,0 +1,93 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #333333;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Utilisation de min-height pour éviter des problèmes d'affichage */
+    max-height: 400px;
+}
+
+.container {
+    background-color: #444;
+    border-radius: 10px;
+    width: 350px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.logo img {
+    width: 40px;
+    height: 40px;
+}
+
+h1 {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+main {
+    flex-grow: 1; /* Allow the content to take up available space */
+    padding: 20px;
+    margin-top: 5px; /* Height of the header */
+    margin-bottom: 5px; /* Reduce bottom margin */
+    overflow-y: auto; /* Enable scrolling for the content */
+}
+
+.button {
+    background-color: #FFA500;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+    color: #FFF;
+
+}
+
+.button:hover {
+    background-color: #ff8c0085;
+}
+
+
+.content {
+    flex-grow: 1;
+    padding: 20px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    overflow-y: auto;
+}
+
+
+footer {
+    margin-top: auto;
+    padding-top: 10px;
+    font-size: 14px;
+    color: #FFF;
+    opacity: 0.8;
+    position: relative;
+}
+
+footer p {
+    font-size: 14px;
+    color: #FFF;
+    opacity: 0.8;
+}
