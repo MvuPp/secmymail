@@ -11,7 +11,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 105vh;
 }
 
 .container {
@@ -23,8 +23,8 @@ body {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
     display: flex;
-    flex-direction: column; /* Makes the content and footer stack vertically */
-    height: 100%; /* Use the full height available */
+    flex-direction: column;
+    height: 100%;
 }
 
 header {
@@ -64,11 +64,11 @@ h1 {
 }
 
 .content {
-    flex-grow: 1; /* Allow the content to take up available space */
+    flex-grow: 1;
     padding: 20px;
-    margin-top: 5px; /* Height of the header */
-    margin-bottom: 5px; /* Reduce bottom margin */
-    overflow-y: auto; /* Enable scrolling for the content */
+    margin-top: 5px;
+    margin-bottom: 5px;
+    overflow-y: auto;
 }
 
 .add-section {
@@ -109,8 +109,8 @@ h1 {
 .tag-list {
     display: flex;
     flex-direction: column;
-    max-height: 300px; /* Set a max height for the tag list */
-    padding-right: 10px; /* Add padding to prevent scrollbar overlap with content */
+    max-height: 300px;
+    padding-right: 10px;
 }
 
 
@@ -144,7 +144,7 @@ h1 {
 }
 
 footer {
-    margin-top: 10px; /* Adjust margin for better spacing */
+    margin-top: 10px;
     padding-top: 10px;
     font-size: 14px;
     color: #FFF;
@@ -159,21 +159,21 @@ footer p {
 }
 
 .content::-webkit-scrollbar {
-    width: 12px; /* Width of the scrollbar */
+    width: 12px; 
 }
 
 .content::-webkit-scrollbar-track {
-    background: #444; /* Background of the scrollbar track */
+    background: #444;
     border-radius: 10px;
 }
 
 .content::-webkit-scrollbar-thumb {
-    background-color: #888; /* Color of the scrollbar thumb */
+    background-color: #888;
     border-radius: 10px;
-    border: 3px solid #444; /* Padding around the thumb */
+    border: 3px solid #444;
 }
 
 .content::-webkit-scrollbar-thumb:hover {
-    background-color: #555; /* Color of the scrollbar thumb on hover */
+    background-color: #555;
 }
 

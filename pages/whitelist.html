@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SecMyMail</title>
-    <link rel="stylesheet" href="../styles/balise.css">
+    <link rel="stylesheet" href="../styles/liste.css">
     <script defer src="../scripts/common.js"></script>
 </head>
 <body>
@@ -15,17 +15,20 @@
                     <img src="../assets/menu-icon.png" alt="Menu">
                 </button>
             </div>
-            <h1>WhiteList</h1>
+            <h1>SecMyMail</h1>
             <div class="logo" link="popup.html">
                 <img src="../assets/logo.png" alt="SecMyMail Logo">
             </div>
         </header>
-        <section class="content">
-            <div template="templates/stringlist.html" id="whitelist"></div>
-        </section>
-        <footer>
-            <p>Par : MailArmor</p>
-        </footer>
+        <main>
+            <h2>Whitelist</h2>
+            <div class="template">
+                <div template="templates/stringlist.html" id="whitelist"></div>
+            </div>
+        </main>
     </div>
+    <footer>
+        <p>Par : MailArmor</p>
+    </footer>
 </body>
 </html>
