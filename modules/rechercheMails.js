@@ -112,7 +112,7 @@ async function checkForNewMails(accountId) {
     let newMailCount = 0;
     let result = await exploreFolders(accountId);
 
-    if (previousMailCount - result.length !== 0) {
+    if (previousMailCount - result.length < 0) {
         for (const currentEmail of result) {
             const previousEmail = previousEmails.find(email => email.id === currentEmail.id);
             if (!previousEmail) {

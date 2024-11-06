@@ -1,22 +1,15 @@
-// Code pour récupérer les comptes Thunderbird pour recup l'id
-/*
-if (browser.accounts) {
-    async function logAccounts() {
-        try {
-            const accounts = await browser.accounts.list();
-            console.log("Liste des comptes Thunderbird :");
-            accounts.forEach(account => {
-                console.log(`Nom : ${account.name}, ID : ${account.id}, Type : ${account.type}`);
-            });
-        } catch (error) {
-            console.error("Erreur lors de la récupération des comptes :", error);
+async function logAccounts() {
+    try {
+        const accounts = await browser.accounts.list();
+        const account = accounts.find(account => account.name.includes('@'));
+        if (account) {
+            return account.id;
         }
+    } catch (error) {
+        console.error("Erreur lors de la récupération des comptes :", error);
     }
-    logAccounts();
-} else {
-    console.error("L'API browser.accounts n'est pas disponible.");
+    return null;
 }
-*/
 
 
 import { checkForNewMails } from '../modules/rechercheMails.js';
@@ -24,8 +17,9 @@ import { comparerMails } from '../modules/comparaisonMail.js';
 import { extraireLiens, comparerLiens } from '../modules/liens.js';
 
 async function displayMailLists() {
+    const accounts = await logAccounts();
     const periodicCheck = async () => {
-        const result = await checkForNewMails("account3");
+        const result = await checkForNewMails(accounts);
         for (const email of result.newEmails) {
             const mailStatus = await comparerMails(email);
             const links = extraireLiens(email.contenu);
