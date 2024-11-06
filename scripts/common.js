@@ -1,6 +1,3 @@
-// Script commun à toutes les pages
-
-// Button links
 function linkButton(button) {
     button.addEventListener("click", function() {
         window.location.href = this.getAttribute("link");
@@ -15,8 +12,6 @@ document.querySelectorAll("button[link]").forEach(function(button) {
     linkButton(button);
 });
 
-
-// Templates
 
 function findTemplate(templateName) {
     for (const node of document.querySelectorAll("div[template]")) {
@@ -44,7 +39,6 @@ async function insertTemplates() {
         try {
             template.innerHTML = await loadHTMLTemplate(templateURL);
 
-            // Scripts in the template are not executed, so we need to manually add them to the page
             const scripts = template.querySelectorAll("script");
             scripts.forEach(oldScript => {
                 const newScript = document.createElement("script");

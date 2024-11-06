@@ -31,8 +31,8 @@ button:hover {
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Ensure space between input and type */
-    margin-bottom: 10px; /* Add some space between items */
+    justify-content: space-between;
+    margin-bottom: 10px;
 }
 
 .input-wrapper input[type="text"] {
@@ -41,7 +41,7 @@ button:hover {
     transition: border-color 0.2s;
     border: 1px solid #555;
     border-radius: 3px;
-    width: 70%; /* Adjust width to make space for type */
+    width: 70%;
     box-sizing: border-box;
     margin-bottom: 5px;
 }
@@ -83,7 +83,7 @@ button:hover {
     border-radius: 3px;
     background-color: #555;
     color: white;
-    margin-left: 10px; /* Add some space between input and type */
+    margin-left: 10px;
 }
 
 .type-display {

@@ -28,15 +28,36 @@ async function getAndExpandSubFolders(folderId) {
     }
 }
 
+async function getFullMessageBody(messageId) {
+    let fullMessage = await messenger.messages.getFull(messageId);
+
+    function getBody(parts) {
+        for (let part of parts) {
+            if (part.contentType === "text/plain" && part.body) {
+                return part.body.trim(); // Retourne tout le contenu du mail
+            } else if (part.parts) {
+                let result = getBody(part.parts);
+                if (result) {
+                    return result.trim(); // Retourne tout le contenu du mail
+                }
+            }
+        }
+        return null;
+    }
+
+    let body = getBody(fullMessage.parts);
+    return body;
+}
+
 async function displayMessagesFromSavedFolders() {
     let currentEmails = [];
     for (const folderWithMessages of foldersWithMessages) {
         const folder = folderWithMessages.folder;
         const messages = folderWithMessages.messages;
 
-        if (folder.name !== "Courrier entrant") {
-            continue;
-        }
+        // if (folder.name !== "Courrier entrant" && folder.name !== "Spam") {
+        //     continue;
+        // }
 
         for (const message of messages) {
             try {
@@ -45,13 +66,15 @@ async function displayMessagesFromSavedFolders() {
                 const emailMatch = messageHeader.author.match(/<(.+)>/);
                 const email = emailMatch ? emailMatch[1] : messageHeader.author;
 
+                const body = await getFullMessageBody(message.id);
+
                 const emailInfo = {
                     id: message.id,
                     expediteur: email || "Inconnu",
                     objet: messageHeader.subject || "Sujet non défini",
                     date: messageHeader.date,
                     taille: messageHeader.size,
-                    contenu: messageHeader.body || "Mail vide"
+                    contenu: body || "Mail vide"
                 };
 
                 currentEmails.push(emailInfo);
@@ -66,6 +89,8 @@ async function displayMessagesFromSavedFolders() {
 
 async function exploreFolders(accountId) {
     try {
+        foldersWithMessages = [];
+
         const accountDetails = await browser.accounts.get(accountId);
         const rootFolder = accountDetails.rootFolder;
 
@@ -83,19 +108,22 @@ async function exploreFolders(accountId) {
 }
 
 async function checkForNewMails(accountId) {
-    const currentEmails = await exploreFolders(accountId);
     let newEmails = [];
     let newMailCount = 0;
-    for (const currentEmail of currentEmails) {
-        const previousEmail = previousEmails.find(email => email.id === currentEmail.id);
-        if (!previousEmail) {
-            newEmails.push(currentEmail);
-            newMailCount++;
-        }
-    }
+    let result = await exploreFolders(accountId);
 
-    previousEmails = currentEmails;
-    previousMailCount = currentEmails.length;
+    if (previousMailCount - result.length !== 0) {
+        for (const currentEmail of result) {
+            const previousEmail = previousEmails.find(email => email.id === currentEmail.id);
+            if (!previousEmail) {
+                newEmails.push(currentEmail);
+                newMailCount++;
+            }
+        }
+    
+        previousEmails = result;
+        previousMailCount = result.length;
+    }
 
     return { newEmails, length: newMailCount };
 }
