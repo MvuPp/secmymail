@@ -32,7 +32,10 @@
         "menus",
         "notifications",
         "messagesModify",
-        "storage"
+        "storage",
+        "messagesMove",
+        "messagesTags",
+        "messagesTagsList"
     ],
     "background": {
         "scripts": ["scripts/background.js"],

@@ -6,7 +6,6 @@
     <title>SecMyMail - Gestionnaire des balises</title>
     <link rel="stylesheet" href="../styles/balise.css">
     <script defer src="../scripts/common.js"></script>
-    <script defer src="../scripts/balise.js"></script>
 </head>
 <body>
     <div class="container">
@@ -22,28 +21,31 @@
             </div>
         </header>
 
-        <section class="content">
+        <main>
             <h2>Gestionnaire des balises</h2>
-            <div class="add-section">
-                <button id="add-tag-btn" class="add-btn">
-                    Ajouter <span class="add-icon">+</span>
-                </button>
+            <button class="button" onclick="toggleList('fichier')">Fichier</button>
+            <div class="list-container" id="fichier-list">
+                <div class="list-item">Fichier</div>
             </div>
 
-            <div class="tag-list">
-                <div class="tag-item">
-                    <div class="tag-color" style="background-color: #8b5cf6;"></div>
-                    <span class="tag-text">Attention</span>
-                    <button class="delete-tag-btn">
-                        <span class="delete-icon">-</span>
-                    </button>
-                </div>
+            <button class="button" onclick="toggleList('mail')">Mail</button>
+            <div class="list-container" id="mail-list">
+                <div class="list-item"><span> <button class="radioButton" id="buttonMailListe" value="secmymail.verified_sender"></button> </span>Mail - Connu <span class="status known"></span></div>
+                <div class="list-item"><span> <button class="radioButton" id="buttonMailListe" value="secmymail.unverified_sender"></button> </span>Mail - Inconnu <span class="status unknown"></span></div>
+                <div class="list-item"><span> <button class="radioButton" id="buttonMailListe" value="secmymail.malicious_sender"></button> </span>Mail - Connu blacklist <span class="status blacklist"></span></div>
             </div>
-        </section>
 
+            <button class="button" onclick="toggleList('domaine')">Domaine</button>
+            <div class="list-container" id="domaine-list">
+                <div class="list-item"><span> <button class="radioButton" id="buttonMailListe" value="secmymail.verified_link"></button> </span>Domaine - Connu <span class="status known"></span></div>
+                <div class="list-item"><span> <button class="radioButton" id="buttonMailListe" value="secmymail.unverified_link"></button> </span>Domaine - Inconnu <span class="status unknown"></span></div>
+                <div class="list-item"><span> <button class="radioButton" id="buttonMailListe" value="secmymail.malicious_link"></button> </span>Domaine - Connu blacklist <span class="status blacklist"></span></div>
+            </div>
+        </main>
         <footer>
             <p>Par : MailArmor</p>
         </footer>
     </div>
+    <script defer src="../scripts/balise.js"></script>
 </body>
 </html>

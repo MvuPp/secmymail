@@ -34,11 +34,11 @@ async function getFullMessageBody(messageId) {
     function getBody(parts) {
         for (let part of parts) {
             if (part.contentType === "text/plain" && part.body) {
-                return part.body.trim(); // Retourne tout le contenu du mail
+                return part.body.trim();
             } else if (part.parts) {
                 let result = getBody(part.parts);
                 if (result) {
-                    return result.trim(); // Retourne tout le contenu du mail
+                    return result.trim();
                 }
             }
         }
@@ -54,10 +54,6 @@ async function displayMessagesFromSavedFolders() {
     for (const folderWithMessages of foldersWithMessages) {
         const folder = folderWithMessages.folder;
         const messages = folderWithMessages.messages;
-
-        // if (folder.name !== "Courrier entrant" && folder.name !== "Spam") {
-        //     continue;
-        // }
 
         for (const message of messages) {
             try {

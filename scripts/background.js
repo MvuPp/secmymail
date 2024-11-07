@@ -11,26 +11,44 @@ async function logAccounts() {
     return null;
 }
 
-
+import { initTags, applyTagToMail } from '../modules/tags.js';
 import { checkForNewMails } from '../modules/rechercheMails.js';
 import { comparerMails } from '../modules/comparaisonMail.js';
 import { extraireLiens, comparerLiens } from '../modules/liens.js';
 
+async function removeExistingTags(result) {
+    for (const message of result) {
+        await browser.messages.update(message.id, { tags: [] });
+    }
+}
+
 async function displayMailLists() {
-    const accounts = await logAccounts();
+    const accountId = await logAccounts();
+    if (!accountId) return;
+    let tagCheck = false;
     const periodicCheck = async () => {
-        const result = await checkForNewMails(accounts);
+        const result = await checkForNewMails(accountId);
+        if (!tagCheck) {
+            await removeExistingTags(result.newEmails);
+            tagCheck = true;
+        }
         for (const email of result.newEmails) {
             const mailStatus = await comparerMails(email);
+
             const links = extraireLiens(email.contenu);
+            let linkStatus = 0;
             if (links.length !== 0) {
-                const linkStatus = await comparerLiens(links);
-                console.log("Nouveaux mails de : ", email.expediteur, " : ", mailStatus, " : ", linkStatus);
+                linkStatus = await comparerLiens(links);
+                await applyTagToMail(email.id, linkStatus, "lien");
             }
+
+            await applyTagToMail(email.id, mailStatus, "mail");
         }
     };
 
     setInterval(periodicCheck, 600);
 }
 
-displayMailLists();
+initTags().then(() => {
+    displayMailLists();
+});
