@@ -1,7 +1,7 @@
 #!/bin/bash
 
 OUTPUT="build/secmymail.xpi"
-FILES=("manifest.json" "assets" "pages" "scripts" "styles" "modules")
+FILES=("manifest.json" "assets" "pages" "scripts" "styles")
 
 mkdir -p "$(dirname "$OUTPUT")"
 rm -f "$OUTPUT"
