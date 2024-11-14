@@ -21,16 +21,9 @@
         "default_icon": "assets/icon.svg"
     },
     "permissions": [
-        "messagesRead",
-        "storage",
-        "webRequest",
-        "activeTab",
-        "compose",
-        "tabs",
-        "messagesUpdate",
         "accountsRead",
-        "menus",
-        "notifications",
+        "messagesRead",
+        "messagesMove",
         "messagesModify",
         "storage",
         "messagesMove",
