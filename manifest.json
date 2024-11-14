@@ -21,18 +21,14 @@
         "default_icon": "assets/icon.svg"
     },
     "permissions": [
-        "messagesRead",
-        "storage",
-        "webRequest",
-        "activeTab",
-        "compose",
-        "tabs",
-        "messagesUpdate",
         "accountsRead",
-        "menus",
-        "notifications",
+        "messagesRead",
+        "messagesMove",
         "messagesModify",
-        "storage"
+        "storage",
+        "messagesMove",
+        "messagesTags",
+        "messagesTagsList"
     ],
     "background": {
         "scripts": ["scripts/background.js"],

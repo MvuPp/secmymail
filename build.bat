@@ -1,7 +1,7 @@
 @echo off
 
 set OUTPUT=build\secmymail.xpi
-set FILES=manifest.json assets pages scripts styles
+set FILES=manifest.json assets pages scripts styles modules
 
 if not exist build mkdir build
 if exist %OUTPUT% del %OUTPUT%

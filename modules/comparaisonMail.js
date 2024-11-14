@@ -5,22 +5,22 @@ const blackListKey = 'blacklist';
 
 browser.storage.sync.get(whitelistKey).then(result => {
     if (result[whitelistKey]) {
-        whiteListMails = result[whitelistKey];
+        whiteListMails = result[whitelistKey].filter(item => item.type === 'mail');
     }
 });
 
 browser.storage.sync.get(blackListKey).then(result => {
     if (result[blackListKey]) {
-        blackListMails = result[blackListKey];
+        blackListMails = result[blackListKey].filter(item => item.type === 'mail');
     }
 });
 
 async function comparerWhiteList(email) {
-    return whiteListMails.includes(email.expediteur);
+    return whiteListMails.some(item => item.value === email.expediteur);
 }
 
 async function comparerBlackList(email) {
-    return blackListMails.includes(email.expediteur);
+    return blackListMails.some(item => item.value === email.expediteur);
 }
 
 async function comparerMails(email) {

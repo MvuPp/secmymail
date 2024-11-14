@@ -2,10 +2,16 @@
 <script defer src="../scripts/stringlist.js"></script>
 
 <div class="stringlist">
+    <div class="choix-whitelist">
+        <button id="mailbtn" class="mail-btn">Mail</button>
+        <button id="domainebtn" class="domaine-btn">Domaine</button>
+    </div>
 
     <input type="text" id="searchBar" placeholder="Rechercher...">
     
-    <button id="addButton">Ajouter</button>
+    <button id="addButton" disabled>Ajouter</button>
 
-    <div id="inputContainer"></div>
+    <div class="content">
+        <div id="inputContainer"></div>
+    </div>
 </div>
