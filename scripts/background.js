@@ -50,19 +50,7 @@ async function displayMailLists() {
         }
     };
 
-const tagsData = {
-    "secmymail.verified_sender": {
-        color: "#00FF00",
-        tag: "Expediteur vérifié",
-    },
-    "secmymail.malicious_sender": {
-        color: "#FF0000",
-        tag: "Expediteur malveillant",
-    },
-    "secmymail.malicious_link": {
-        color: "#FF0000",
-        tag: "Lien malveillant",
-    },
+    setInterval(periodicCheck, 600);
 }
 
 initTags().then(() => {
