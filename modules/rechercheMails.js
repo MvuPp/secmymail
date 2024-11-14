@@ -30,23 +30,26 @@ async function getAndExpandSubFolders(folderId) {
 
 async function getFullMessageBody(messageId) {
     let fullMessage = await messenger.messages.getFull(messageId);
+    let fullAttachments = await messenger.messages.listAttachments(messageId);
 
     function getBody(parts) {
         for (let part of parts) {
             if (part.contentType === "text/plain" && part.body) {
-                return part.body.trim(); // Retourne tout le contenu du mail
+                return part.body.trim();
             } else if (part.parts) {
                 let result = getBody(part.parts);
                 if (result) {
-                    return result.trim(); // Retourne tout le contenu du mail
+                    return result.trim();
                 }
             }
         }
         return null;
     }
 
+
     let body = getBody(fullMessage.parts);
-    return body;
+
+    return { body, fullAttachments };
 }
 
 async function displayMessagesFromSavedFolders() {
@@ -55,10 +58,6 @@ async function displayMessagesFromSavedFolders() {
         const folder = folderWithMessages.folder;
         const messages = folderWithMessages.messages;
 
-        if (folder.name !== "Courrier entrant" && folder.name !== "Spam") {
-            continue;
-        }
-
         for (const message of messages) {
             try {
                 const messageHeader = await browser.messages.get(message.id);
@@ -66,7 +65,7 @@ async function displayMessagesFromSavedFolders() {
                 const emailMatch = messageHeader.author.match(/<(.+)>/);
                 const email = emailMatch ? emailMatch[1] : messageHeader.author;
 
-                const body = await getFullMessageBody(message.id);
+                const bodyData = await getFullMessageBody(message.id);
 
                 const emailInfo = {
                     id: message.id,
@@ -74,7 +73,8 @@ async function displayMessagesFromSavedFolders() {
                     objet: messageHeader.subject || "Sujet non défini",
                     date: messageHeader.date,
                     taille: messageHeader.size,
-                    contenu: body || "Mail vide"
+                    contenu: bodyData.body || "Mail vide",
+                    piecesJointes: bodyData.fullAttachments || "Aucune pièce jointe",
                 };
 
                 currentEmails.push(emailInfo);
@@ -112,7 +112,7 @@ async function checkForNewMails(accountId) {
     let newMailCount = 0;
     let result = await exploreFolders(accountId);
 
-    if (previousMailCount - result.length !== 0) {
+    if (previousMailCount - result.length < 0) {
         for (const currentEmail of result) {
             const previousEmail = previousEmails.find(email => email.id === currentEmail.id);
             if (!previousEmail) {

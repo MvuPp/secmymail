@@ -9,22 +9,20 @@ body {
     background-color: #333333;
     color: white;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 105vh;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 .container {
     background-color: #444;
     border-radius: 10px;
     width: 350px;
-    max-height: 400px;
     padding: 20px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex-grow: 1;
 }
 
 header {
@@ -58,98 +56,109 @@ h1 {
     font-weight: bold;
 }
 
-.content h2 {
-    font-size: 18px;
+h2 {
+    font-size: 20px;
     margin-bottom: 15px;
 }
 
-.content {
-    flex-grow: 1;
-    padding: 20px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    overflow-y: auto;
-}
-
-.add-section {
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-.add-btn {
-    background-color: #666;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    position: relative;
-}
-
-.add-btn .add-icon {
-    color: black;
-    background-color: #FFA500;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    border-radius: 10px;
-    margin-left: 10px;
-    font-size: 16px;
-}
-
-.add-section:hover .add-btn {
-    background-color: #555;
-}
-
-.tag-list {
+main {
     display: flex;
     flex-direction: column;
-    max-height: 300px;
-    padding-right: 10px;
+    gap: 10px;
 }
 
-
-.tag-item {
-    background-color: #555;
-    padding: 10px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.tag-color {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-}
-
-.tag-text {
-    flex-grow: 1;
-    margin-left: 15px;
-}
-
-.delete-tag-btn {
-    background-color: #FFA500;
+.button {
+    background-color: #E88922;
     border: none;
-    padding: 2px 10px;
-    border-radius: 10px;
+    padding: 10px 30px;
+    border-radius: 5px;
     cursor: pointer;
+    margin: 10px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #FFF;
 }
+
+.button:hover {
+    background-color: #e8882275;
+}
+
+.color-input {
+    cursor: pointer;
+    width: 20px;
+    height: 25px;
+    border-radius: 50%;
+    margin: 0 5px;
+    background-color: transparent;
+    border: none;
+}
+
+.list-container {
+    display: none;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #707070;
+    border-radius: 5px;
+}
+
+.list-item {
+    background-color: #e0e0e0;
+    color: black;
+    padding: 5px;
+    margin: 5px 0;
+    border-radius: 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status.known {
+    background-color: #00FF00;
+}
+
+.status.unknown {
+    background-color: #FFA500;
+}
+
+.status.blacklist {
+    background-color: #FF0000;
+}
+
+.radioButton {
+    width: 15px;
+    height: 15px;
+    border-radius: 20%;
+    cursor: pointer;
+    background-color: #FF0000;
+    border: transparent;
+    margin-top: 5px;
+    margin-left: 5px;
+}
+
+.radioButton {
+    background-color: #00FF00;
+}
+
+
 
 footer {
-    margin-top: 10px;
-    padding-top: 10px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #444;
+    padding: 10px 0;
+    text-align: center;
     font-size: 14px;
     color: #FFF;
     opacity: 0.8;
-    position: relative;
 }
 
 footer p {
@@ -157,23 +166,3 @@ footer p {
     color: #FFF;
     opacity: 0.8;
 }
-
-.content::-webkit-scrollbar {
-    width: 12px; 
-}
-
-.content::-webkit-scrollbar-track {
-    background: #444;
-    border-radius: 10px;
-}
-
-.content::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-    border: 3px solid #444;
-}
-
-.content::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
-}
-

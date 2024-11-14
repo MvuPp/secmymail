@@ -22,25 +22,27 @@
             </div>
         </header>
 
-        <section class="content">
+        <main>
             <h2>Gestionnaire des balises</h2>
-            <div class="add-section">
-                <button id="add-tag-btn" class="add-btn">
-                    Ajouter <span class="add-icon">+</span>
-                </button>
+            <button class="button">Fichier</button>
+            <div class="list-container" id="fichier-list">
+                <div class="list-item"><span> <button class="radioButton"></button></span>Fichier <span><input type="color" class="color-input" name="secmymail.contained_files"></span> </div>
             </div>
 
-            <div class="tag-list">
-                <div class="tag-item">
-                    <div class="tag-color" style="background-color: #8b5cf6;"></div>
-                    <span class="tag-text">Attention</span>
-                    <button class="delete-tag-btn">
-                        <span class="delete-icon">-</span>
-                    </button>
-                </div>
+            <button class="button">Mail</button>
+            <div class="list-container" id="mail-list">
+                <div class="list-item"><span> <button class="radioButton" ></button> </span>Mail - Connu <span><input type="color" class="color-input" name="secmymail.verified_sender"></span></div>
+                <div class="list-item"><span> <button class="radioButton" ></button> </span>Mail - Inconnu <span><input type="color" class="color-input" name="secmymail.unverified_sender"></span></div>
+                <div class="list-item"><span> <button class="radioButton" ></button> </span>Mail - Connu blacklist <span><input type="color" class="color-input" name="secmymail.malicious_sender"></span></div>
             </div>
-        </section>
 
+            <button class="button">Domaine</button>
+            <div class="list-container" id="domaine-list">
+                <div class="list-item"><span> <button class="radioButton" ></button> </span>Domaine - Connu <span><input type="color" class="color-input" name="secmymail.verified_link"></span></div>
+                <div class="list-item"><span> <button class="radioButton" ></button> </span>Domaine - Inconnu <span><input type="color" class="color-input" name="secmymail.unverified_link"></span></div>
+                <div class="list-item"><span> <button class="radioButton" ></button> </span>Domaine - Connu blacklist <span><input type="color" class="color-input" name="secmymail.malicious_link"></span></div>
+            </div>
+        </main>
         <footer>
             <p>Par : MailArmor</p>
         </footer>

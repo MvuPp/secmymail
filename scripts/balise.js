@@ -1,37 +1,47 @@
-document.getElementById('add-tag-btn').addEventListener('click', function() {
-    // Fonction pour générer une couleur hexadécimale aléatoire
-    function getRandomColor() {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
+import { updateTagValue } from '../modules/tags.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    
+    const fichierButton = document.querySelector('.button:nth-of-type(1)');
+    const mailButton = document.querySelector('.button:nth-of-type(2)');
+    const domaineButton = document.querySelector('.button:nth-of-type(3)');
+
+    const fichierList = document.getElementById('fichier-list');
+    const mailList = document.getElementById('mail-list');
+    const domaineList = document.getElementById('domaine-list');
+
+    const colorInputs = document.querySelectorAll('.color-input');
+
+    colorInputs.forEach(input => {
+        input.addEventListener('input', (event) => {
+            const color = event.target.value;
+            updateTagValue(input.name, color, null);
+        });
+    });
+
+    function hideAllLists() {
+        fichierList.style.display = 'none';
+        mailList.style.display = 'none';
+        domaineList.style.display = 'none';
     }
 
-    // Créer un nouvel élément de balise
-    const newTag = document.createElement('div');
-    newTag.className = 'tag-item';
-    newTag.innerHTML = `
-        <div class="tag-color" style="background-color: ${getRandomColor()};"></div>
-        <span class="tag-text">Nouvelle Balise</span>
-        <button class="delete-tag-btn">
-            <span class="delete-icon">-</span>
-        </button>
-    `;
-
-    // Ajouter le nouvel élément à la liste des balises
-    document.querySelector('.tag-list').appendChild(newTag);
-
-    // Ajouter un événement de suppression pour le nouveau bouton
-    newTag.querySelector('.delete-tag-btn').addEventListener('click', function() {
-        this.parentElement.remove();
+    fichierButton.addEventListener('click', () => {
+        const isVisible = fichierList.style.display === 'block';
+        hideAllLists();
+        fichierList.style.display = isVisible ? 'none' : 'block';
     });
-});
 
-// Ajouter un événement de suppression pour les boutons existants
-document.querySelectorAll('.delete-tag-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        this.parentElement.remove();
+    mailButton.addEventListener('click', () => {
+        const isVisible = mailList.style.display === 'block';
+        hideAllLists();
+        mailList.style.display = isVisible ? 'none' : 'block';
     });
+
+    domaineButton.addEventListener('click', () => {
+        const isVisible = domaineList.style.display === 'block';
+        hideAllLists();
+        domaineList.style.display = isVisible ? 'none' : 'block';
+    });
+
+    hideAllLists();
 });

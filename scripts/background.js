@@ -1,27 +1,54 @@
-// Code pour récupérer les comptes Thunderbird pour recup l'id
-/*
-if (browser.accounts) {
-    async function logAccounts() {
-        try {
-            const accounts = await browser.accounts.list();
-            console.log("Liste des comptes Thunderbird :");
-            accounts.forEach(account => {
-                console.log(`Nom : ${account.name}, ID : ${account.id}, Type : ${account.type}`);
-            });
-        } catch (error) {
-            console.error("Erreur lors de la récupération des comptes :", error);
+async function logAccounts() {
+    try {
+        const accounts = await browser.accounts.list();
+        const account = accounts.find(account => account.name.includes('@'));
+        if (account) {
+            return account.id;
         }
+    } catch (error) {
+        console.error("Erreur lors de la récupération des comptes :", error);
     }
-    logAccounts();
-} else {
-    console.error("L'API browser.accounts n'est pas disponible.");
+    return null;
 }
-*/
 
-
+import { initTags, applyTagToMail } from '../modules/tags.js';
 import { checkForNewMails } from '../modules/rechercheMails.js';
 import { comparerMails } from '../modules/comparaisonMail.js';
+import { extraireLiens, comparerLiens } from '../modules/liens.js';
 
+async function removeExistingTags(result) {
+    for (const message of result) {
+        await browser.messages.update(message.id, { tags: [] });
+    }
+}
+
+async function displayMailLists() {
+    const accountId = await logAccounts();
+    if (!accountId) return;
+    let tagCheck = false;
+    const periodicCheck = async () => {
+        const result = await checkForNewMails(accountId);
+        if (!tagCheck) {
+            await removeExistingTags(result.newEmails);
+            tagCheck = true;
+        }
+        for (const email of result.newEmails) {
+            const mailStatus = await comparerMails(email);
+
+            const links = extraireLiens(email.contenu);
+            let linkStatus = 0;
+            if (links.length !== 0) {
+                linkStatus = await comparerLiens(links);
+                await applyTagToMail(email.id, linkStatus, "lien");
+            }
+
+            if (email.piecesJointes.length > 0) {
+                await applyTagToMail(email.id, null, "fichier");
+            }
+
+            await applyTagToMail(email.id, mailStatus, "mail");
+        }
+    };
 
 const tagsData = {
     "secmymail.verified_sender": {
@@ -38,48 +65,6 @@ const tagsData = {
     },
 }
 
-const tags = {}
-
-async function init() {
-
-    // Initialize tags
-    let tagList = await browser.messages.tags.list();
-    let tagDict = Object.fromEntries(tagList.map(tag => [tag.key, tag]));
-
-    for (let [key, data] of Object.entries(tagsData)) {
-        if (key in tagDict) {
-            let tag = tagDict[key];
-            browser.messages.tags.update(tag.key, {color: data.color, tag: data.tag});
-            tags[key] = tag;
-        } else {
-            tags[key] = await browser.messages.tags.create(key, data.tag, data.color);
-        }
-    }
-}
-
-
-console.log("I'm here")
-async function handleMail(folder, message) {
-    console.log("Detected new mail in folder", folder, "with subject", message.subject);
-    //TODO: Apply all checks to the email
-}
-
-async function handleAllExistingEmails() {
-    let allExistingEmails = (await browser.messages.query({})).messages;
-    for (let email of allExistingEmails) {
-        handleMail(email.folder, email);
-    }
-}
-
-
-
-browser.messages.onNewMailReceived.addListener((folder, messages) => {
-    let message = messages[0];
-    handleMail(folder, message);
-});
-
-
-
-init().then(() => {
-    handleAllExistingEmails();
+initTags().then(() => {
+    displayMailLists();
 });

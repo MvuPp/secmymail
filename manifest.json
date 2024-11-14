@@ -25,10 +25,10 @@
         "messagesRead",
         "messagesMove",
         "messagesModify",
-        "messagesUpdate",
+        "storage",
+        "messagesMove",
         "messagesTags",
-        "messagesTagsList",
-        "storage"
+        "messagesTagsList"
     ],
     "background": {
         "scripts": ["scripts/background.js"],
