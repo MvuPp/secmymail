@@ -42,6 +42,10 @@ async function displayMailLists() {
                 await applyTagToMail(email.id, linkStatus, "lien");
             }
 
+            if (email.piecesJointes.length > 0) {
+                await applyTagToMail(email.id, null, "fichier");
+            }
+
             await applyTagToMail(email.id, mailStatus, "mail");
         }
     };

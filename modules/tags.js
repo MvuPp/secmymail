@@ -7,7 +7,7 @@ const tagsData = {
     "secmymail.unverified_sender": {
         color: "#FFFF00",
         tag: "Expediteur non vérifié",
-        active: false
+        active: true
     },
     "secmymail.malicious_sender": {
         color: "#FF0000",
@@ -34,7 +34,7 @@ const tagsData = {
         tag: "Fichiers joints",
         active: true
     }
-}
+};
 
 const tags = {};
 

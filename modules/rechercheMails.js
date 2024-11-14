@@ -30,6 +30,7 @@ async function getAndExpandSubFolders(folderId) {
 
 async function getFullMessageBody(messageId) {
     let fullMessage = await messenger.messages.getFull(messageId);
+    let fullAttachments = await messenger.messages.listAttachments(messageId);
 
     function getBody(parts) {
         for (let part of parts) {
@@ -45,8 +46,10 @@ async function getFullMessageBody(messageId) {
         return null;
     }
 
+
     let body = getBody(fullMessage.parts);
-    return body;
+
+    return { body, fullAttachments };
 }
 
 async function displayMessagesFromSavedFolders() {
@@ -62,7 +65,7 @@ async function displayMessagesFromSavedFolders() {
                 const emailMatch = messageHeader.author.match(/<(.+)>/);
                 const email = emailMatch ? emailMatch[1] : messageHeader.author;
 
-                const body = await getFullMessageBody(message.id);
+                const bodyData = await getFullMessageBody(message.id);
 
                 const emailInfo = {
                     id: message.id,
@@ -70,7 +73,8 @@ async function displayMessagesFromSavedFolders() {
                     objet: messageHeader.subject || "Sujet non défini",
                     date: messageHeader.date,
                     taille: messageHeader.size,
-                    contenu: body || "Mail vide"
+                    contenu: bodyData.body || "Mail vide",
+                    piecesJointes: bodyData.fullAttachments || "Aucune pièce jointe",
                 };
 
                 currentEmails.push(emailInfo);
