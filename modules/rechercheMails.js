@@ -64,20 +64,22 @@ async function displayMessagesFromSavedFolders() {
                 
                 const emailMatch = messageHeader.author.match(/<(.+)>/);
                 const email = emailMatch ? emailMatch[1] : messageHeader.author;
+                let attachmentType = 0;
 
                 const bodyData = await getFullMessageBody(message.id);
-                const dangerousExtensions = ['exe', 'bat', 'com', 'cmd', 'scr', 'pif', 'cpl', 'js', 'jse', 'vbs', 'vbe', 'wsf', 'wsh', 'msi', 'msp', 'jar'];
-                
+                const dangerousExtensions = ['test', 'exe', 'bat', 'com', 'cmd', 'scr', 'pif', 'cpl', 'js', 'jse', 'vbs', 'vbe', 'wsf', 'wsh', 'msi', 'msp', 'jar'];
                 if (bodyData.fullAttachments.length > 0) {
+                    attachmentType = 1;
                     for (const attachment of bodyData.fullAttachments) {
-                        const extension = attachment.filename.split('.').pop().toLowerCase();
-                        console.log(extension);
-                        if (!dangerousExtensions.includes(extension)) {
-                            console.log(attachment.contentType, attachment.filename);
+                        const extension = attachment.name.split('.').pop();
+                        if (dangerousExtensions.includes(extension)) {
+                            console.log(`Pièce jointe dangereuse trouvée : ${attachment.name}`);
+                            attachmentType = -1;
                         }
                     }
                 }
-
+                
+                console.log(attachmentType);
                 const emailInfo = {
                     id: message.id,
                     expediteur: email || "Inconnu",
@@ -85,7 +87,7 @@ async function displayMessagesFromSavedFolders() {
                     date: messageHeader.date,
                     taille: messageHeader.size,
                     contenu: bodyData.body || "Mail vide",
-                    piecesJointes: bodyData.fullAttachments || "Aucune pièce jointe",
+                    piecesJointes: attachmentType || "Aucune pièce jointe",
                 };
 
                 currentEmails.push(emailInfo);
@@ -107,6 +109,7 @@ async function exploreFolders(accountId) {
 
         if (rootFolder) {
             await getAndExpandSubFolders(rootFolder.id);
+
             return await displayMessagesFromSavedFolders();
         } else {
             console.error(`Aucun dossier racine trouvé pour le compte avec ID ${accountId}`);

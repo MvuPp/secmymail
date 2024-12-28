@@ -29,9 +29,14 @@ const tagsData = {
         tag: "Lien malveillant",
         active: true
     },
-    "secmymail.contained_files": {
+    "secmymail.contained_file": {
         color: "#FFA500",
-        tag: "Fichiers joints",
+        tag: "Fichier joint",
+        active: true
+    },
+    "secmymail.malicious_file": {
+        color: "#FF0000",
+        tag: "Fichier malveillant",
         active: true
     }
 };
@@ -73,7 +78,11 @@ async function applyTagToMail(mailId, value, type) {
             tagKey = "secmymail.malicious_link";
         }
     } else if (type === "fichier") {
-        tagKey = "secmymail.contained_files";
+        if (value === -1) {
+            tagKey = "secmymail.malicious_file";
+        } else if (value === 1) {
+            tagKey = "secmymail.contained_file";
+        }
     }
 
     if (tagKey && tagsData[tagKey].active && tags[tagKey]) {

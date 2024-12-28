@@ -1,9 +1,10 @@
 async function logAccounts() {
     try {
         const accounts = await browser.accounts.list();
-        const account = accounts.find(account => account.name.includes('@'));
-        if (account) {
-            return account.id;
+        const filteredAccounts = accounts.filter(account => account.name.includes('@'));
+        console.log("Comptes mail trouvés :", filteredAccounts);
+        if (filteredAccounts.length > 0) {
+            return filteredAccounts.map(account => account.id);
         }
     } catch (error) {
         console.error("Erreur lors de la récupération des comptes :", error);
@@ -15,6 +16,7 @@ import { initTags, applyTagToMail } from '../modules/tags.js';
 import { checkForNewMails } from '../modules/rechercheMails.js';
 import { comparerMails } from '../modules/comparaisonMail.js';
 import { extraireLiens, comparerLiens } from '../modules/liens.js';
+import { recupererTousLesContacts, ajouterWhiteList, supprimerWhiteList } from '../modules/carnetAdresse.js';
 
 async function removeExistingTags(result) {
     for (const message of result) {
@@ -23,34 +25,60 @@ async function removeExistingTags(result) {
 }
 
 async function displayMailLists() {
-    const accountId = await logAccounts();
-    if (!accountId) return;
+    const accountIds = await logAccounts();
+    if (!accountIds) return;
     let tagCheck = false;
+    let contactCheck = 0;
+
     const periodicCheck = async () => {
-        const result = await checkForNewMails(accountId);
-        if (!tagCheck) {
-            await removeExistingTags(result.newEmails);
-            tagCheck = true;
+
+        const allEmails = await recupererTousLesContacts();
+        console.log("Liste des contacts :", allEmails);
+
+        if (contactCheck < allEmails.length) {
+            try {
+                await ajouterWhiteList(allEmails);
+                contactCheck = allEmails.length;
+            } catch (error) {
+                console.error("Erreur lors de l'ajout des contacts à la liste blanche :", error);
+            }
+        } else if (contactCheck > allEmails.length) {
+            try {
+                await supprimerWhiteList(allEmails);
+                contactCheck = allEmails.length;
+            } catch (error) {
+                console.error("Erreur lors de la suppression des contacts de la liste blanche :", error);
+            }
         }
-        for (const email of result.newEmails) {
-            const mailStatus = await comparerMails(email);
 
-            const links = extraireLiens(email.contenu);
-            let linkStatus = 0;
-            if (links.length !== 0) {
-                linkStatus = await comparerLiens(links);
-                await applyTagToMail(email.id, linkStatus, "lien");
+        for (const accountId of accountIds) {
+            const result = await checkForNewMails(accountId);
+            if (!tagCheck) {
+                await removeExistingTags(result.newEmails);
+                tagCheck = true;
             }
+            for (const email of result.newEmails) {
+                const mailStatus = await comparerMails(email);
 
-            if (email.piecesJointes.length > 0) {
-                await applyTagToMail(email.id, null, "fichier");
+                const links = extraireLiens(email.contenu);
+                let linkStatus = 0;
+                if (links.length !== 0) {
+                    linkStatus = await comparerLiens(links);
+                    await applyTagToMail(email.id, linkStatus, "lien");
+                }
+
+                if (email.piecesJointes === 1 ) {
+                    await applyTagToMail(email.id, 1, "fichier");
+                } else if (email.piecesJointes === -1) {
+                    await applyTagToMail(email.id, -1, "fichier");
+                }
+
+                await applyTagToMail(email.id, mailStatus, "mail");
             }
-
-            await applyTagToMail(email.id, mailStatus, "mail");
         }
     };
 
-    setInterval(periodicCheck, 600);
+    setInterval(periodicCheck, 6000);
 }
 
 initTags().then(() => {
