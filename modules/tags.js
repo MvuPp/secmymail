@@ -1,41 +1,41 @@
 const tagsData = {
     "secmymail.verified_sender": {
-        color: "#00FF00",
+        default_color: "#00FF00",
         tag: "Expediteur vérifié",
         active: true
     },
     "secmymail.unverified_sender": {
-        color: "#FFFF00",
+        default_color: "#FFFF00",
         tag: "Expediteur non vérifié",
         active: true
     },
     "secmymail.malicious_sender": {
-        color: "#FF0000",
+        default_color: "#FF0000",
         tag: "Expediteur malveillant",
         active: true
     },
     "secmymail.verified_link": {
-        color: "#00FF00",
+        default_color: "#00FF00",
         tag: "Lien vérifié",
         active: true
     },
     "secmymail.unverified_link": {
-        color: "#FFFF00",
+        default_color: "#FFFF00",
         tag: "Lien non vérifié",
         active: true
     },
     "secmymail.malicious_link": {
-        color: "#FF0000",
+        default_color: "#FF0000",
         tag: "Lien malveillant",
         active: true
     },
     "secmymail.contained_file": {
-        color: "#FFA500",
+        default_color: "#FFA500",
         tag: "Fichier joint",
         active: true
     },
     "secmymail.malicious_file": {
-        color: "#FF0000",
+        default_color: "#FF0000",
         tag: "Fichier malveillant",
         active: true
     }
@@ -50,10 +50,10 @@ async function initTags() {
     for (let [key, data] of Object.entries(tagsData)) {
         if (key in tagDict) {
             let tag = tagDict[key];
-            await browser.messages.tags.update(tag.key, { color: data.color, tag: data.tag });
+            await browser.messages.tags.update(tag.key, { tag: data.tag });
             tags[key] = tag;
         } else {
-            tags[key] = await browser.messages.tags.create(key, data.tag, data.color);
+            tags[key] = await browser.messages.tags.create(key, data.tag, data.default_color);
         }
     }
 }
@@ -105,14 +105,14 @@ async function updateTagValue(name, value, active) {
     let tag = tags[name];
 
     if (value === undefined) {
-        value = tagsData[name].color;
+        value = tagsData[name].default_color;
     } else if (active === undefined) { 
         active = tagsData[name].active;
     }
 
     if (tag) {
-        await browser.messages.tags.update(tag.key, { color: value, tag: tag.tag, active: active });
+        await browser.messages.tags.update(tag.key, { default_color: value, tag: tag.tag, active: active });
     }
 }
 
-export { initTags, applyTagToMail, updateTagValue };
+export { initTags, applyTagToMail, updateTagValue, tagsData };
