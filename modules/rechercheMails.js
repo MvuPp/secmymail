@@ -5,7 +5,6 @@ let previousEmails = [];
 async function getAndExpandSubFolders(folderId) {
     try {
         const subFolders = await browser.folders.getSubFolders(folderId);
-
         for (const folder of subFolders) {
             try {
                 const messageList = await browser.messages.list(folder.id);
@@ -73,13 +72,11 @@ async function displayMessagesFromSavedFolders() {
                     for (const attachment of bodyData.fullAttachments) {
                         const extension = attachment.name.split('.').pop();
                         if (dangerousExtensions.includes(extension)) {
-                            console.log(`Pièce jointe dangereuse trouvée : ${attachment.name}`);
                             attachmentType = -1;
                         }
                     }
                 }
                 
-                console.log(attachmentType);
                 const emailInfo = {
                     id: message.id,
                     expediteur: email || "Inconnu",
@@ -88,6 +85,7 @@ async function displayMessagesFromSavedFolders() {
                     taille: messageHeader.size,
                     contenu: bodyData.body || "Mail vide",
                     piecesJointes: attachmentType || "Aucune pièce jointe",
+                    dossier: folder.name
                 };
 
                 currentEmails.push(emailInfo);

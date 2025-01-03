@@ -17,6 +17,7 @@ import { checkForNewMails } from '../modules/rechercheMails.js';
 import { comparerMails } from '../modules/comparaisonMail.js';
 import { extraireLiens, comparerLiens } from '../modules/liens.js';
 import { recupererTousLesContacts, ajouterWhiteList, supprimerWhiteList } from '../modules/carnetAdresse.js';
+import { initDossiers, deplacerMessages } from '../modules/dossier.js';
 
 async function removeExistingTags(result) {
     for (const message of result) {
@@ -31,7 +32,6 @@ async function displayMailLists() {
     let contactCheck = 0;
 
     const periodicCheck = async () => {
-
         const allEmails = await recupererTousLesContacts();
         console.log("Liste des contacts :", allEmails);
 
@@ -52,6 +52,7 @@ async function displayMailLists() {
         }
 
         for (const accountId of accountIds) {
+            await initDossiers();
             const result = await checkForNewMails(accountId);
             if (!tagCheck) {
                 await removeExistingTags(result.newEmails);
@@ -74,6 +75,14 @@ async function displayMailLists() {
                 }
 
                 await applyTagToMail(email.id, mailStatus, "mail");
+
+                if (mailStatus === -1 || linkStatus === -1 || email.piecesJointes === -1) {
+                    await deplacerMessages([email.id], accountId + "://INBOX/Malicious");
+                } else if (mailStatus === 1 || linkStatus === 1) {
+                    await deplacerMessages([email.id], accountId + "://INBOX/Verified");
+                } else {
+                    await deplacerMessages([email.id], accountId + "://INBOX/Unverified");
+                }
             }
         }
     };
@@ -84,3 +93,5 @@ async function displayMailLists() {
 initTags().then(() => {
     displayMailLists();
 });
+
+export { logAccounts };
