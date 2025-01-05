@@ -10,7 +10,7 @@ body {
     color: white;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 101vh;
 }
 
 .container {
@@ -93,8 +93,8 @@ main {
     border: none;
 }
 
-.list-container {
-    display: none;
+.list-container, .dossier-container {
+    display: block; /* Assurez-vous que la liste est visible */
     margin-top: 10px;
     padding: 10px;
     background-color: #707070;
@@ -143,10 +143,12 @@ main {
 }
 
 .radioButton {
-    background-color: #00FF00;
+    margin-right: 10px;
 }
 
-
+.radioButton.active {
+    background-color: green;
+}
 
 footer {
     position: fixed;

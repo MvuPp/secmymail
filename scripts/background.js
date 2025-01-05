@@ -33,7 +33,6 @@ async function displayMailLists() {
 
     const periodicCheck = async () => {
         const allEmails = await recupererTousLesContacts();
-        console.log("Liste des contacts :", allEmails);
 
         if (contactCheck < allEmails.length) {
             try {
@@ -75,13 +74,38 @@ async function displayMailLists() {
                 }
 
                 await applyTagToMail(email.id, mailStatus, "mail");
+                let type;
 
                 if (mailStatus === -1 || linkStatus === -1 || email.piecesJointes === -1) {
-                    await deplacerMessages([email.id], accountId + "://INBOX/Malicious");
-                } else if (mailStatus === 1 || linkStatus === 1) {
-                    await deplacerMessages([email.id], accountId + "://INBOX/Verified");
+                    if (mailStatus === -1) {
+                        type = "mail";
+                    }
+                    if (linkStatus === -1) {
+                        type = "lien";
+                    }
+                    if (email.piecesJointes === -1) {
+                        type = "fichier";
+                    }
+                    await deplacerMessages([email.id], accountId + "://INBOX/Malicious", type);
+                }else if (mailStatus === 1 || linkStatus === 1) {
+                    if (mailStatus === 1) {
+                        type = "mail";
+                    }
+                    if (linkStatus === 1) {
+                        type = "lien";
+                    }
+                    await deplacerMessages([email.id], accountId + "://INBOX/Verified" , type);
                 } else {
-                    await deplacerMessages([email.id], accountId + "://INBOX/Unverified");
+                    if (mailStatus === 0) {
+                        type = "mail";
+                    }
+                    if (linkStatus === 0) {
+                        type = "lien";
+                    }
+                    if (email.piecesJointes === 1) {
+                        type = "fichier";
+                    }
+                    await deplacerMessages([email.id], accountId + "://INBOX/Unverified", type);
                 }
             }
         }

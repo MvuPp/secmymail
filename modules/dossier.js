@@ -10,6 +10,18 @@ const dossierData = {
     }
 };
 
+const dossierActive = {
+    "mail": {
+        active: true
+    },
+    "lien": {
+        active: true
+    },
+    "fichier": {
+        active: true
+   }
+}
+
 import { logAccounts } from "../scripts/background.js";
 const accounts = await logAccounts();
 const account = accounts[0];
@@ -25,10 +37,12 @@ async function creerDossier(folderId, childName) {
     }
 }
 
-async function deplacerMessages(messageIds, folderId) {
+async function deplacerMessages(messageIds, folderId, type) {
     try {
-        await messenger.messages.move(messageIds, folderId);
-        console.log(`Messages déplacés vers le dossier : ${folderId}`);
+        if (dossierActive[type].active) {
+            await messenger.messages.move(messageIds, folderId);
+            console.log(`Messages déplacés vers le dossier : ${folderId}`);
+        }
     } catch (error) {
         console.error(`Erreur lors du déplacement des messages : ${error}`);
     }

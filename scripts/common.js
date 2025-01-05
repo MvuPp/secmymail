@@ -56,4 +56,20 @@ async function insertTemplates() {
 
 window.addEventListener("DOMContentLoaded", insertTemplates);
 
+/*
+Ouvrir une autre fenêtre est le seul moyen pour que le changement de couleur prenne effet
+C'est à cause de ce bug de Firefox/Thunderbird :
+https://bugzilla.mozilla.org/show_bug.cgi?id=1378527
+*/
+const tagsButton = document.getElementById("tags-button");
+if (tagsButton) {
+    tagsButton.addEventListener("click", function() {
+        browser.windows.create({
+            url: 'tags.html',
+            type: 'popup',
+            width: 400,
+            height: 600
+        });
+    });
+}
     

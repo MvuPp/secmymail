@@ -6,7 +6,7 @@
     <title>SecMyMail - Gestionnaire des balises</title>
     <link rel="stylesheet" href="../styles/balise.css">
     <script defer src="../scripts/common.js"></script>
-    <script defer src="../scripts/balise.js"></script>
+    <script defer type="module" src="../scripts/balise.js"></script>
 </head>
 <body>
     <div class="container">
@@ -25,23 +25,16 @@
         <main>
             <h2>Gestionnaire des balises</h2>
             <button class="button">Fichier</button>
-            <div class="list-container" id="fichier-list">
-                <div class="list-item"><span> <button class="radioButton"></button></span>Fichier <span><input type="color" class="color-input" name="secmymail.contained_files"></span> </div>
-            </div>
 
             <button class="button">Mail</button>
-            <div class="list-container" id="mail-list">
-                <div class="list-item"><span> <button class="radioButton" ></button> </span>Mail - Connu <span><input type="color" class="color-input" name="secmymail.verified_sender"></span></div>
-                <div class="list-item"><span> <button class="radioButton" ></button> </span>Mail - Inconnu <span><input type="color" class="color-input" name="secmymail.unverified_sender"></span></div>
-                <div class="list-item"><span> <button class="radioButton" ></button> </span>Mail - Connu blacklist <span><input type="color" class="color-input" name="secmymail.malicious_sender"></span></div>
-            </div>
 
             <button class="button">Domaine</button>
-            <div class="list-container" id="domaine-list">
-                <div class="list-item"><span> <button class="radioButton" ></button> </span>Domaine - Connu <span><input type="color" class="color-input" name="secmymail.verified_link"></span></div>
-                <div class="list-item"><span> <button class="radioButton" ></button> </span>Domaine - Inconnu <span><input type="color" class="color-input" name="secmymail.unverified_link"></span></div>
-                <div class="list-item"><span> <button class="radioButton" ></button> </span>Domaine - Connu blacklist <span><input type="color" class="color-input" name="secmymail.malicious_link"></span></div>
+
+            
+            <div>
+                <button id="tags-button" class="button">Changer les couleurs</button>
             </div>
+
         </main>
         <footer>
             <p>Par : MailArmor</p>
