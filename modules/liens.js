@@ -1,3 +1,8 @@
+/**
+ * Ici voir pour ajouter la fonctionnalité d'alerte en plus lors du clique sur un lien avant la redirection
+ * la confirmation supplémentaire.
+ */
+
 function extraireLiens(text) {
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
 

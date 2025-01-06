@@ -76,6 +76,11 @@ async function displayMailLists() {
                 await applyTagToMail(email.id, mailStatus, "mail");
                 let type;
 
+                /**
+                 * A réfléchir si en meme temps que toutes ses vérif on rajoute ou pas une table pour chaque type de tag
+                 * du moins où on stock les mails suspect, vérifié et non vérifié pour ne pas avoir à les rechercher à chaque fois dans tout les mails.
+                 */
+
                 if (mailStatus === -1 || linkStatus === -1 || email.piecesJointes === -1) {
                     if (mailStatus === -1) {
                         type = "mail";

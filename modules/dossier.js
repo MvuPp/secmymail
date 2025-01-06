@@ -1,3 +1,13 @@
+/**
+ * Ici faut encore faire en sorte de pouvoir activer ou désactiver "dossierActive" si aucun est activé alors ne pas créer les dossiers
+ * et si il y en a au moins 1 d'activé alors les créer.
+ * 
+ * Il faut donc faire une fonction qui permet de reprendre tout les mails existant et les déplacer comme on fait à l'initialisation
+ * de l'app. Et ça pour chaque modif visuel comme par exemple l'ajout en whitelist ou blacklist d'un mail pendant que l'app est ouverte.
+ * Il faut une méthode qui permet d'update tout et de tout vérif genre faire une recherche dans tout les mails de ceux qui correspondent 
+ * à la dernière valeur ajouter en base de donnée
+ */
+
 const dossierData = {
     "Malicious": {
         active: true
@@ -70,4 +80,4 @@ async function supprimerDossier(dossier) {
     }
 }
 
-export { creerDossier, deplacerMessages, initDossiers, changeEtatDossier, supprimerDossier };
+export { creerDossier, deplacerMessages, initDossiers, changeEtatDossier, supprimerDossier, dossierData, dossierActive };

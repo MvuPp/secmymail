@@ -1,3 +1,8 @@
+/**
+ * Ici il faudrai ajouter sur la page whitelist.html un bouton pour actier ou désactiver cette fonctionnalité
+ * ce qui veut dire si activer alors ajouter en whitelist sinon les supprimer de la whitelist.
+ */
+
 import { comparerWhiteList } from './comparaisonMail.js';
 
 async function listeCarnetAdresse(parentId) {
