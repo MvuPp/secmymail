@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SecMyMail</title>
-    <link rel="stylesheet" href="../styles/liste.css">
+    <link rel="stylesheet" href="../styles/popup.css">
     <script defer src="../scripts/common.js"></script>
 </head>
 <body>
@@ -22,8 +22,11 @@
         </header>
         <main>
             <h2>Blacklist</h2>
-            <div class="template">
-                <div template="templates/stringlist.html" id="blacklist"></div>
+            <div>
+                <button class="button" link="./lists/domain-blacklist.html" popup width="600" height="800">Domaines malveillants</button>
+            </div>
+            <div>
+                <button class="button" link="./lists/email-blacklist.html" popup width="600" height="800">Adresses malveillantes</button>
             </div>
         </main>
         <footer>

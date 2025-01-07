@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isActive) {
                     button.classList.add('active');
                     button.style.backgroundColor = 'green';
-                }
+                } 
             } else {
                 // const tag = listTags.find(tag => tag.tag === tagName);
                 // if (tag) {
