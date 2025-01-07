@@ -12,11 +12,16 @@ function extraireLiens(text) {
             return url.hostname;
         } catch (e) {
             console.error(`Invalid URL: ${link}`);
-            return null;
+            const domainMatch = link.match(/https?:\/\/([^\/\s]+)/);
+            if (domainMatch) {
+                return domainMatch[1];
+            } else {
+                console.error(`Unable to extract domain from: ${link}`);
+                return null;
+            }
         }
     }).filter(domain => domain !== null);
 }
-
 
 let whiteListMails = [];
 let blackListMails = [];

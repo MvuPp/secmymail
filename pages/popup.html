@@ -17,15 +17,24 @@
         </header>
         <main>
             <div>
-                <button class="button" link="whitelist.html" >Carnet d’adresse / WhiteList</button>
+                <button class="button" link="domain-whitelist.html" popup width="600" height="800">Domaines de confiance</button>
             </div>
-    
             <div>
-                <button class="button" link="balise.html">Gestionnaire des balises</button>
+                <button class="button" link="email-whitelist.html" popup width="600" height="800">Adresses de confiance</button>
             </div>
-    
             <div>
-                <button class="button" link="blacklist.html">Liste noir / BlackList</button>
+                <button class="button" link="domain-blacklist.html" popup width="600" height="800">Domaines malveillants</button>
+            </div>
+            <div>
+                <button class="button" link="email-blacklist.html" popup width="600" height="800">Adresses malveillantes</button>
+            </div>
+            <div>
+                <!--
+                    Ouvrir une autre fenêtre est le seul moyen pour que le changement de couleur prenne effet
+                    C'est à cause de ce bug de Firefox/Thunderbird :
+                    https://bugzilla.mozilla.org/show_bug.cgi?id=1378527
+                -->
+                <button class="button" link="tags.html" popup width="400" height="600">Tags</button>
             </div>
         </main>
 

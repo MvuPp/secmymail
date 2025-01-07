@@ -21,14 +21,22 @@
         "default_icon": "assets/icon.svg"
     },
     "permissions": [
-        "accountsRead",
         "messagesRead",
-        "messagesMove",
+        "storage",
+        "webRequest",
+        "activeTab",
+        "compose",
+        "tabs",
+        "messagesUpdate",
+        "accountsRead",
+        "menus",
+        "notifications",
         "messagesModify",
         "storage",
         "messagesMove",
         "messagesTags",
-        "messagesTagsList"
+        "messagesTagsList",
+        "addressBooks"
     ],
     "background": {
         "scripts": ["scripts/background.js"],
@@ -36,7 +44,7 @@
 
     },
     "options_ui": {
-        "page": "pages/balise.html",
+        "page": "pages/popup.html",
         "open_in_tab": true
     },
     "icons": {
