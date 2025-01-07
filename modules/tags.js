@@ -92,9 +92,9 @@ async function applyTagToMail(mailId, value, type) {
         if (!existingTags.includes(tagKey)) {
             existingTags.push(tagKey);
             await browser.messages.update(mailId, { tags: existingTags });
-            console.log(`Tag applied: ${tags[tagKey].tag} to mail ID: ${mailId}`);
+            // console.log(`Tag applied: ${tags[tagKey].tag} to mail ID: ${mailId}`);
         } else {
-            console.log(`Tag already exists: ${tags[tagKey].tag} for mail ID: ${mailId}`);
+            // console.log(`Tag already exists: ${tags[tagKey].tag} for mail ID: ${mailId}`);
         }
     } else {
         console.error(`Invalid tag key, tag not initialized, or tag not active for value: ${value}`);

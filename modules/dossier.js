@@ -7,6 +7,7 @@
  * Il faut une méthode qui permet d'update tout et de tout vérif genre faire une recherche dans tout les mails de ceux qui correspondent 
  * à la dernière valeur ajouter en base de donnée
  */
+import { checkForMails } from '../modules/rechercheMails.js';
 
 const dossierData = {
     "Malicious": {
@@ -29,7 +30,7 @@ const dossierActive = {
     },
     "fichier": {
         active: true
-   }
+    }
 }
 
 import { logAccounts } from "../scripts/background.js";
@@ -59,15 +60,19 @@ async function deplacerMessages(messageIds, folderId, type) {
 }
 
 async function initDossiers() {
+    localStorage.setItem("dossierActive", JSON.stringify(dossierActive));
     for (const [key] of Object.entries(dossierData)) {
         if (dossierData[key].active) await creerDossier(account + "://INBOX", key);
     }
 }
 
 async function changeEtatDossier(dossier, etat) {
-    dossierData[dossier].active = etat;
+    let localstorage = JSON.parse(localStorage.getItem("dossierActive"));
+    localstorage[dossier].active = etat;
+    localStorage.setItem("dossierActive", JSON.stringify(localstorage));
     if (etat) await creerDossier(account + "://INBOX", dossier);
     else await supprimerDossier(dossier);
+    console.log("changement d'état du dossier : ", dossier);
 }
 
 async function supprimerDossier(dossier) {
@@ -79,5 +84,6 @@ async function supprimerDossier(dossier) {
         console.error(`Erreur lors de la suppression du dossier : ${error}`);
     }
 }
+
 
 export { creerDossier, deplacerMessages, initDossiers, changeEtatDossier, supprimerDossier, dossierData, dossierActive };

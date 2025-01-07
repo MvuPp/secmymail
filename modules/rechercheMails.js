@@ -140,4 +140,23 @@ async function checkForNewMails(accountId) {
     return { newEmails, length: newMailCount };
 }
 
-export { checkForNewMails };
+// Méthode pour revérifier tous les mails
+async function checkForMails(accountId) {
+    let newEmails = [];
+    let newMailCount = 0;
+    let result = await exploreFolders(accountId);
+
+    for (const currentEmail of result) {
+        const previousEmail = previousEmails.find(email => email.id === currentEmail.id);
+        if (!previousEmail) {
+            newEmails.push(currentEmail);
+            newMailCount++;
+        }
+    }
+
+    previousEmails = result;
+
+    return { newEmails, length: newMailCount };
+}
+
+export { checkForNewMails, checkForMails };

@@ -30,28 +30,11 @@ async function displayMailLists() {
     if (!accountIds) return;
     let tagCheck = false;
     let contactCheck = 0;
+    await initDossiers();
 
     const periodicCheck = async () => {
-        const allEmails = await recupererTousLesContacts();
-
-        if (contactCheck < allEmails.length) {
-            try {
-                await ajouterWhiteList(allEmails);
-                contactCheck = allEmails.length;
-            } catch (error) {
-                console.error("Erreur lors de l'ajout des contacts à la liste blanche :", error);
-            }
-        } else if (contactCheck > allEmails.length) {
-            try {
-                await supprimerWhiteList(allEmails);
-                contactCheck = allEmails.length;
-            } catch (error) {
-                console.error("Erreur lors de la suppression des contacts de la liste blanche :", error);
-            }
-        }
 
         for (const accountId of accountIds) {
-            await initDossiers();
             const result = await checkForNewMails(accountId);
             if (!tagCheck) {
                 await removeExistingTags(result.newEmails);

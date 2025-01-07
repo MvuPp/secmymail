@@ -8,7 +8,6 @@ import { comparerWhiteList } from './comparaisonMail.js';
 async function listeCarnetAdresse(parentId) {
     try {
         const contacts = await messenger.addressBooks.contacts.list(parentId);
-        console.log(`Liste des contacts pour le carnet d'adresses ${parentId} :`, contacts);
         return contacts;
     } catch (error) {
         console.error(`Erreur lors de la récupération des contacts pour le carnet d'adresses ${parentId} :`, error);
@@ -19,7 +18,6 @@ async function listeCarnetAdresse(parentId) {
 async function obtenirCarnetsAdresses() {
     try {
         const addressBooks = await messenger.addressBooks.list();
-        console.log("Liste des carnets d'adresses :", addressBooks);
         return addressBooks;
     } catch (error) {
         console.error("Erreur lors de la récupération des carnets d'adresses :", error);
@@ -92,4 +90,24 @@ async function supprimerWhiteList(emails) {
     }
 }
 
-export { recupererTousLesContacts, ajouterWhiteList, supprimerWhiteList};
+async function carnetActive() {
+    const allEmails = await recupererTousLesContacts();
+
+    if (contactCheck < allEmails.length) {
+        try {
+            await ajouterWhiteList(allEmails);
+            contactCheck = allEmails.length;
+        } catch (error) {
+            console.error("Erreur lors de l'ajout des contacts à la liste blanche :", error);
+        }
+    } else if (contactCheck > allEmails.length) {
+        try {
+            await supprimerWhiteList(allEmails);
+            contactCheck = allEmails.length;
+        } catch (error) {
+            console.error("Erreur lors de la suppression des contacts de la liste blanche :", error);
+        }
+    }
+}
+
+export { recupererTousLesContacts, ajouterWhiteList, supprimerWhiteList, carnetActive};

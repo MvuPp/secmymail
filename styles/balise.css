@@ -4,13 +4,18 @@
     box-sizing: border-box;
 }
 
+html, body {
+    width: 100vw;
+    height: 103vh;
+}
+
 body {
     font-family: Arial, sans-serif;
     background-color: #333333;
     color: white;
     display: flex;
     flex-direction: column;
-    min-height: 101vh;
+    height: 100%; /* Fixe la hauteur à 100% de la vue */
 }
 
 .container {
@@ -23,6 +28,7 @@ body {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    margin: auto; /* Centre la container */
 }
 
 header {
@@ -134,20 +140,15 @@ main {
 .radioButton {
     width: 15px;
     height: 15px;
-    border-radius: 20%;
+    border-radius: 20%; /* Pour un bouton circulaire */
     cursor: pointer;
-    background-color: #FF0000;
-    border: transparent;
-    margin-top: 5px;
-    margin-left: 5px;
-}
-
-.radioButton {
-    margin-right: 10px;
+    background-color: red; /* Couleur par défaut */
+    border: none;
+    margin: 5px;
 }
 
 .radioButton.active {
-    background-color: green;
+    background-color: green; /* Couleur lorsque le bouton est actif */
 }
 
 footer {
