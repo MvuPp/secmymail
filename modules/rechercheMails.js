@@ -84,7 +84,7 @@ async function displayMessagesFromSavedFolders() {
                     date: messageHeader.date,
                     taille: messageHeader.size,
                     contenu: bodyData.body || "Mail vide",
-                    piecesJointes: attachmentType || "Aucune pièce jointe",
+                    piecesJointes: attachmentType,
                     dossier: folder.name
                 };
 

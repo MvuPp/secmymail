@@ -78,6 +78,7 @@ async function changeEtatDossier(dossier, etat) {
 async function supprimerDossier(dossier) {
     try {
         value = account + "://INBOX/" + dossier;
+        
         await messenger.folders.delete(value);
         console.log(`Dossier supprimé : ${dossier}`);
     } catch (error) {

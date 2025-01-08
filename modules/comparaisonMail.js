@@ -6,7 +6,6 @@ const blackListKey = 'email-blacklist';
 browser.storage.sync.get(whitelistKey).then(result => {
     if (result[whitelistKey]) {
         whiteListMails = result[whitelistKey];
-        console.log(whiteListMails);
     }
 });
 

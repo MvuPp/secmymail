@@ -2,7 +2,6 @@ async function logAccounts() {
     try {
         const accounts = await browser.accounts.list();
         const filteredAccounts = accounts.filter(account => account.name.includes('@'));
-        console.log("Comptes mail trouvés :", filteredAccounts);
         if (filteredAccounts.length > 0) {
             return filteredAccounts.map(account => account.id);
         }
@@ -44,7 +43,7 @@ async function displayMailLists() {
                 const mailStatus = await comparerMails(email);
 
                 const links = extraireLiens(email.contenu);
-                let linkStatus = 0;
+                let linkStatus = 2;
                 if (links.length !== 0) {
                     linkStatus = await comparerLiens(links);
                     await applyTagToMail(email.id, linkStatus, "lien");
@@ -64,7 +63,9 @@ async function displayMailLists() {
                  * du moins où on stock les mails suspect, vérifié et non vérifié pour ne pas avoir à les rechercher à chaque fois dans tout les mails.
                  */
 
-                if (mailStatus === -1 || linkStatus === -1 || email.piecesJointes === -1) {
+                let resultatEtat = [mailStatus, linkStatus, email.piecesJointes];
+
+                if (resultatEtat.includes(-1)) {
                     if (mailStatus === -1) {
                         type = "mail";
                     }
@@ -75,14 +76,14 @@ async function displayMailLists() {
                         type = "fichier";
                     }
                     await deplacerMessages([email.id], accountId + "://INBOX/Malicious", type);
-                } else if (mailStatus === 1 || linkStatus === 1) {
+                } else if (resultatEtat[0] === 1 && resultatEtat[1] === 1 && resultatEtat[2] === 0 || resultatEtat[0] === 1 && resultatEtat[1] === 2 && resultatEtat[2] === 0) {
                     if (mailStatus === 1) {
                         type = "mail";
                     }
                     if (linkStatus === 1) {
                         type = "lien";
                     }
-                    await deplacerMessages([email.id], accountId + "://INBOX/Verified" , type);
+                    await deplacerMessages([email.id], accountId + "://INBOX/Verified", type);
                 } else {
                     if (mailStatus === 0) {
                         type = "mail";
