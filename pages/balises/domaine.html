@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecMyMail - Gestionnaire des balises</title>
+    <link rel="stylesheet" href="../../styles/balise.css">
+    <script defer src="../../scripts/common.js"></script>
+    <script defer type="module" src="../../scripts/balises.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="menu-icon">
+                <button id="menu-btn">
+                    <img src="../../assets/menu-icon.png" alt="Menu">
+                </button>
+            </div>
+            <h1>SecMyMail</h1>
+            <div class="logo" link="popup.html">
+                <img src="../../assets/logo.png" alt="SecMyMail Logo">
+            </div>
+        </header>
+
+        <main>
+            <div class="list-container" id="domaine-list">
+                <p>Liste des tags disponibles pour les domaines</p>
+                <div class="list-item">
+                    <span>
+                        <button class="radioButton balise" id="secmymail.verified_link"></button>
+                    </span>
+                    Domaine - Connu
+                    <span></span>
+                </div>
+                <div class="list-item">
+                    <span>
+                        <button class="radioButton balise" id="secmymail.unverified_link"></button>
+                    </span>
+                    Domaine - Inconnu
+                    <span></span>
+                </div>
+                <div class="list-item">
+                    <span>
+                        <button class="radioButton balise" id="secmymail.malicious_link"></button>
+                    </span>
+                    Domaine - Connu blacklist
+                    <span></span>
+                </div>
+            </div>
+
+            <div class="dossier-container">
+                <p>Voulez-vous activer le déplacement des mails dans des dossiers spécifiques aux balises ?</p>
+                <div class="list-item">
+                    <span>
+                        <button class="radioButton" id="dossier" name="lien"></button>
+                    </span>
+                    Déplacement des mails
+                    <span></span>
+                </div>
+            </div>
+        </main>
+        <footer>
+            <p>Par : MailArmor</p>
+        </footer>
+    </div>
+</body>
+</html>

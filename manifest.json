@@ -36,7 +36,8 @@
         "messagesMove",
         "messagesTags",
         "messagesTagsList",
-        "addressBooks"
+        "addressBooks",
+        "accountsFolders"
     ],
     "background": {
         "scripts": ["scripts/background.js"],

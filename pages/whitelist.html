@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SecMyMail</title>
-    <link rel="stylesheet" href="../styles/liste.css">
+    <link rel="stylesheet" href="../styles/popup.css">
     <script defer src="../scripts/common.js"></script>
 </head>
 <body>
@@ -21,15 +21,18 @@
             </div>
         </header>
         <main>
-            <h2>Domaines malveillants</h2>
-            <div class="template">
-                <div template="templates/stringlist.html" id="domain-blacklist"></div>
+            <h2>Whitelist</h2>
+            <div>
+                <button class="button" link="./lists/domain-whitelist.html" popup width="600" height="800">Domaines de confiance</button>
             </div>
+            <div>
+                <button class="button" link="./lists/email-whitelist.html" popup width="600" height="800">Adresses de confiance</button>
+            </div>
+
         </main>
         <footer>
             <p>Par : MailArmor</p>
         </footer>
     </div>
-
 </body>
 </html>

@@ -2,7 +2,6 @@ async function logAccounts() {
     try {
         const accounts = await browser.accounts.list();
         const filteredAccounts = accounts.filter(account => account.name.includes('@'));
-        console.log("Comptes mail trouvés :", filteredAccounts);
         if (filteredAccounts.length > 0) {
             return filteredAccounts.map(account => account.id);
         }
@@ -17,6 +16,7 @@ import { checkForNewMails } from '../modules/rechercheMails.js';
 import { comparerMails } from '../modules/comparaisonMail.js';
 import { extraireLiens, comparerLiens } from '../modules/liens.js';
 import { recupererTousLesContacts, ajouterWhiteList, supprimerWhiteList } from '../modules/carnetAdresse.js';
+import { initDossiers, deplacerMessages } from '../modules/dossier.js';
 
 async function removeExistingTags(result) {
     for (const message of result) {
@@ -29,27 +29,9 @@ async function displayMailLists() {
     if (!accountIds) return;
     let tagCheck = false;
     let contactCheck = 0;
+    await initDossiers();
 
     const periodicCheck = async () => {
-
-        const allEmails = await recupererTousLesContacts();
-        console.log("Liste des contacts :", allEmails);
-
-        if (contactCheck < allEmails.length) {
-            try {
-                await ajouterWhiteList(allEmails);
-                contactCheck = allEmails.length;
-            } catch (error) {
-                console.error("Erreur lors de l'ajout des contacts à la liste blanche :", error);
-            }
-        } else if (contactCheck > allEmails.length) {
-            try {
-                await supprimerWhiteList(allEmails);
-                contactCheck = allEmails.length;
-            } catch (error) {
-                console.error("Erreur lors de la suppression des contacts de la liste blanche :", error);
-            }
-        }
 
         for (const accountId of accountIds) {
             const result = await checkForNewMails(accountId);
@@ -61,7 +43,7 @@ async function displayMailLists() {
                 const mailStatus = await comparerMails(email);
 
                 const links = extraireLiens(email.contenu);
-                let linkStatus = 0;
+                let linkStatus = 2;
                 if (links.length !== 0) {
                     linkStatus = await comparerLiens(links);
                     await applyTagToMail(email.id, linkStatus, "lien");
@@ -74,6 +56,46 @@ async function displayMailLists() {
                 }
 
                 await applyTagToMail(email.id, mailStatus, "mail");
+                let type;
+
+                /**
+                 * A réfléchir si en meme temps que toutes ses vérif on rajoute ou pas une table pour chaque type de tag
+                 * du moins où on stock les mails suspect, vérifié et non vérifié pour ne pas avoir à les rechercher à chaque fois dans tout les mails.
+                 */
+
+                let resultatEtat = [mailStatus, linkStatus, email.piecesJointes];
+
+                if (resultatEtat.includes(-1)) {
+                    if (mailStatus === -1) {
+                        type = "mail";
+                    }
+                    if (linkStatus === -1) {
+                        type = "lien";
+                    }
+                    if (email.piecesJointes === -1) {
+                        type = "fichier";
+                    }
+                    await deplacerMessages([email.id], accountId + "://INBOX/Malicious", type);
+                } else if (resultatEtat[0] === 1 && resultatEtat[1] === 1 && resultatEtat[2] === 0 || resultatEtat[0] === 1 && resultatEtat[1] === 2 && resultatEtat[2] === 0) {
+                    if (mailStatus === 1) {
+                        type = "mail";
+                    }
+                    if (linkStatus === 1) {
+                        type = "lien";
+                    }
+                    await deplacerMessages([email.id], accountId + "://INBOX/Verified", type);
+                } else {
+                    if (mailStatus === 0) {
+                        type = "mail";
+                    }
+                    if (linkStatus === 0) {
+                        type = "lien";
+                    }
+                    if (email.piecesJointes === 1) {
+                        type = "fichier";
+                    }
+                    await deplacerMessages([email.id], accountId + "://INBOX/Unverified", type);
+                }
             }
         }
     };
@@ -84,3 +106,5 @@ async function displayMailLists() {
 initTags().then(() => {
     displayMailLists();
 });
+
+export { logAccounts };
