@@ -1,3 +1,8 @@
+/**
+ * Ici voir pour ajouter la fonctionnalité d'alerte en plus lors du clique sur un lien avant la redirection
+ * la confirmation supplémentaire.
+ */
+
 function extraireLiens(text) {
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
 
@@ -23,29 +28,30 @@ function extraireLiens(text) {
     }).filter(domain => domain !== null);
 }
 
-let whiteListMails = [];
-let blackListMails = [];
-const whitelistKey = 'whitelist';
-const blackListKey = 'blacklist';
+let whiteListDomaines = [];
+let blackListDomaines = [];
+const whitelistKey = 'domain-whitelist';
+const blackListKey = 'domain-blacklist';
 
 browser.storage.sync.get(whitelistKey).then(result => {
     if (result[whitelistKey]) {
-        whiteListMails = result[whitelistKey].filter(item => item.type === 'domaine');
+        whiteListDomaines = result[whitelistKey];
+        console.log(whiteListDomaines);
     }
 });
 
 browser.storage.sync.get(blackListKey).then(result => {
     if (result[blackListKey]) {
-        blackListMails = result[blackListKey].filter(item => item.type === 'domaine');
+        blackListDomaines = result[blackListKey];
     }
 });
 
 async function comparerWhiteList(link) {
-    return whiteListMails.some(item => link.startsWith(item.value));
+    return whiteListDomaines.some(item => link.startsWith(item));
 }
 
 async function comparerBlackList(link) {
-    return blackListMails.some(item => link.startsWith(item.value));
+    return blackListDomaines.some(item => link.startsWith(item));
 }
 
 async function comparerLiens(links) {

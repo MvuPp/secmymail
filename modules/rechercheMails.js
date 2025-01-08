@@ -5,7 +5,6 @@ let previousEmails = [];
 async function getAndExpandSubFolders(folderId) {
     try {
         const subFolders = await browser.folders.getSubFolders(folderId);
-
         for (const folder of subFolders) {
             try {
                 const messageList = await browser.messages.list(folder.id);
@@ -73,13 +72,11 @@ async function displayMessagesFromSavedFolders() {
                     for (const attachment of bodyData.fullAttachments) {
                         const extension = attachment.name.split('.').pop();
                         if (dangerousExtensions.includes(extension)) {
-                            console.log(`Pièce jointe dangereuse trouvée : ${attachment.name}`);
                             attachmentType = -1;
                         }
                     }
                 }
                 
-                console.log(attachmentType);
                 const emailInfo = {
                     id: message.id,
                     expediteur: email || "Inconnu",
@@ -87,7 +84,8 @@ async function displayMessagesFromSavedFolders() {
                     date: messageHeader.date,
                     taille: messageHeader.size,
                     contenu: bodyData.body || "Mail vide",
-                    piecesJointes: attachmentType || "Aucune pièce jointe",
+                    piecesJointes: attachmentType,
+                    dossier: folder.name
                 };
 
                 currentEmails.push(emailInfo);
@@ -142,4 +140,23 @@ async function checkForNewMails(accountId) {
     return { newEmails, length: newMailCount };
 }
 
-export { checkForNewMails };
+// Méthode pour revérifier tous les mails
+async function checkForMails(accountId) {
+    let newEmails = [];
+    let newMailCount = 0;
+    let result = await exploreFolders(accountId);
+
+    for (const currentEmail of result) {
+        const previousEmail = previousEmails.find(email => email.id === currentEmail.id);
+        if (!previousEmail) {
+            newEmails.push(currentEmail);
+            newMailCount++;
+        }
+    }
+
+    previousEmails = result;
+
+    return { newEmails, length: newMailCount };
+}
+
+export { checkForNewMails, checkForMails };
