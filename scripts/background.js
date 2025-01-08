@@ -75,7 +75,7 @@ async function displayMailLists() {
                         type = "fichier";
                     }
                     await deplacerMessages([email.id], accountId + "://INBOX/Malicious", type);
-                }else if (mailStatus === 1 || linkStatus === 1) {
+                } else if (mailStatus === 1 || linkStatus === 1) {
                     if (mailStatus === 1) {
                         type = "mail";
                     }

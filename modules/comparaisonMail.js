@@ -1,26 +1,27 @@
 let whiteListMails = [];
 let blackListMails = [];
-const whitelistKey = 'whitelist';
-const blackListKey = 'blacklist';
+const whitelistKey = 'email-whitelist';
+const blackListKey = 'email-blacklist';
 
 browser.storage.sync.get(whitelistKey).then(result => {
     if (result[whitelistKey]) {
-        whiteListMails = result[whitelistKey].filter(item => item.type === 'mail');
+        whiteListMails = result[whitelistKey];
+        console.log(whiteListMails);
     }
 });
 
 browser.storage.sync.get(blackListKey).then(result => {
     if (result[blackListKey]) {
-        blackListMails = result[blackListKey].filter(item => item.type === 'mail');
+        blackListMails = result[blackListKey];
     }
 });
 
 async function comparerWhiteList(email) {
-    return whiteListMails.some(item => item.value === email.expediteur);
+    return whiteListMails.some(item => item === email.expediteur);
 }
 
 async function comparerBlackList(email) {
-    return blackListMails.some(item => item.value === email.expediteur);
+    return blackListMails.some(item => item === email.expediteur);
 }
 
 async function comparerMails(email) {
