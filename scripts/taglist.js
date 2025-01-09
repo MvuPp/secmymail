@@ -22,7 +22,7 @@ async function initTaglist() {
         input.type = 'color';
         input.value = tagColor;
         input.addEventListener('change', async (event) => {
-            console.log(`Updating tag ${tagName} color to ${event.target.value}`);
+            //console.log(`Updating tag ${tagName} color to ${event.target.value}`);
             await browser.messages.tags.update(key, { color: event.target.value });
         });
         tdColor.appendChild(input);

@@ -3,9 +3,7 @@
  * ce qui veut dire si activer alors ajouter en whitelist sinon les supprimer de la whitelist.
  */
 
-import { comparerWhiteList } from './comparaisonMail.js';
-
-async function listeCarnetAdresse(parentId) {
+async function listAddressBook(parentId) {
     try {
         const contacts = await messenger.addressBooks.contacts.list(parentId);
         return contacts;
@@ -15,7 +13,7 @@ async function listeCarnetAdresse(parentId) {
     }
 }
 
-async function obtenirCarnetsAdresses() {
+async function getAddressBooks() {
     try {
         const addressBooks = await messenger.addressBooks.list();
         return addressBooks;
@@ -25,12 +23,12 @@ async function obtenirCarnetsAdresses() {
     }
 }
 
-async function recupererTousLesContacts() {
-    const addressBooks = await obtenirCarnetsAdresses();
+async function getAllContacts() {
+    const addressBooks = await getAddressBooks();
     const allEmails = [];
     if (addressBooks) {
         for (const book of addressBooks) {
-            const contacts = await listeCarnetAdresse(book.id);
+            const contacts = await listAddressBook(book.id);
             if (contacts) {
                 contacts.forEach(contact => {
                     const emailMatches = contact.vCard.match(/EMAIL[^:]*:([^@\s]+@[^@\s]+\.[^@\s]+)/gi);
@@ -47,42 +45,42 @@ async function recupererTousLesContacts() {
     return allEmails;
 }
 
-async function ajouterWhiteList(emails) {
+async function addWhiteList(emails) {
     const whitelistKey = 'whitelist';
-    let whiteListMails = [];
+    let whiteListEmails = [];
 
     const result = await browser.storage.sync.get(whitelistKey);
     if (result[whitelistKey]) {
-        whiteListMails = result[whitelistKey];
+        whiteListEmails = result[whitelistKey];
     }
 
     for (const email of emails) {
-        const isWhiteListed = whiteListMails.some(item => item.value === email);
+        const isWhiteListed = whiteListEmails.some(item => item.value === email);
         if (isWhiteListed) {
             console.log(`L'adresse ${email} est déjà dans la liste blanche.`);
         } else {
-            whiteListMails.push({ type: 'mail', value: email });
-            await browser.storage.sync.set({ [whitelistKey]: whiteListMails });
+            whiteListEmails.push({ type: 'mail', value: email });
+            await browser.storage.sync.set({ [whitelistKey]: whiteListEmails });
             console.log(`L'adresse ${email} a été ajoutée à la liste blanche.`);
         }
     }
 }
 
 // à tester
-async function supprimerWhiteList(emails) {
+async function removeWhiteList(emails) {
     const whitelistKey = 'whitelist';
-    let whiteListMails = [];
+    let whiteListEmails = [];
 
     const result = await browser.storage.sync.get(whitelistKey);
     if (result[whitelistKey]) {
-        whiteListMails = result[whitelistKey];
+        whiteListEmails = result[whitelistKey];
     }
 
     for (const email of emails) {
-        const index = whiteListMails.findIndex(item => item.value === email);
+        const index = whiteListEmails.findIndex(item => item.value === email);
         if (index !== -1) {
-            whiteListMails.splice(index, 1);
-            await browser.storage.sync.set({ [whitelistKey]: whiteListMails });
+            whiteListEmails.splice(index, 1);
+            await browser.storage.sync.set({ [whitelistKey]: whiteListEmails });
             console.log(`L'adresse ${email} a été retirée de la liste blanche.`);
         } else {
             console.log(`L'adresse ${email} n'est pas dans la liste blanche.`);
@@ -90,19 +88,19 @@ async function supprimerWhiteList(emails) {
     }
 }
 
-async function carnetActive() {
-    const allEmails = await recupererTousLesContacts();
+async function addressBookActive() {
+    const allEmails = await getAllContacts();
 
     if (contactCheck < allEmails.length) {
         try {
-            await ajouterWhiteList(allEmails);
+            await addWhiteList(allEmails);
             contactCheck = allEmails.length;
         } catch (error) {
             console.error("Erreur lors de l'ajout des contacts à la liste blanche :", error);
         }
     } else if (contactCheck > allEmails.length) {
         try {
-            await supprimerWhiteList(allEmails);
+            await removeWhiteList(allEmails);
             contactCheck = allEmails.length;
         } catch (error) {
             console.error("Erreur lors de la suppression des contacts de la liste blanche :", error);
@@ -110,4 +108,4 @@ async function carnetActive() {
     }
 }
 
-export { recupererTousLesContacts, ajouterWhiteList, supprimerWhiteList, carnetActive};
+export { getAllContacts, addWhiteList, removeWhiteList, addressBookActive };

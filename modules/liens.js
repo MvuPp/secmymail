@@ -3,7 +3,7 @@
  * la confirmation supplémentaire.
  */
 
-function extraireLiens(text) {
+function extractLinks(text) {
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
 
     const links = text.match(urlRegex) || [];
@@ -28,36 +28,36 @@ function extraireLiens(text) {
     }).filter(domain => domain !== null);
 }
 
-let whiteListDomaines = [];
-let blackListDomaines = [];
-const whitelistKey = 'domain-whitelist';
+let whiteListDomains = [];
+let blackListDomains = [];
+const whiteListKey = 'domain-whitelist';
 const blackListKey = 'domain-blacklist';
 
-browser.storage.sync.get(whitelistKey).then(result => {
-    if (result[whitelistKey]) {
-        whiteListDomaines = result[whitelistKey];
+browser.storage.sync.get(whiteListKey).then(result => {
+    if (result[whiteListKey]) {
+        whiteListDomains = result[whiteListKey];
     }
 });
 
 browser.storage.sync.get(blackListKey).then(result => {
     if (result[blackListKey]) {
-        blackListDomaines = result[blackListKey];
+        blackListDomains = result[blackListKey];
     }
 });
 
-async function comparerWhiteList(link) {
-    return whiteListDomaines.some(item => link.startsWith(item));
+async function compareWhiteList(link) {
+    return whiteListDomains.some(item => link.startsWith(item));
 }
 
-async function comparerBlackList(link) {
-    return blackListDomaines.some(item => link.startsWith(item));
+async function compareBlackList(link) {
+    return blackListDomains.some(item => link.startsWith(item));
 }
 
-async function comparerLiens(links) {
+async function compareLinks(links) {
     let results = [];
     for (let link of links) {
-        let isWhiteListed = await comparerWhiteList(link);
-        let isBlackListed = await comparerBlackList(link);
+        let isWhiteListed = await compareWhiteList(link);
+        let isBlackListed = await compareBlackList(link);
         if (isWhiteListed) {
             results.push(1);
         } else if (isBlackListed) {
@@ -76,4 +76,4 @@ async function comparerLiens(links) {
     }
 }
 
-export { extraireLiens, comparerLiens };
+export { extractLinks, compareLinks };

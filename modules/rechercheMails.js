@@ -45,7 +45,6 @@ async function getFullMessageBody(messageId) {
         return null;
     }
 
-
     let body = getBody(fullMessage.parts);
 
     return { body, fullAttachments };
@@ -79,13 +78,13 @@ async function displayMessagesFromSavedFolders() {
                 
                 const emailInfo = {
                     id: message.id,
-                    expediteur: email || "Inconnu",
-                    objet: messageHeader.subject || "Sujet non défini",
+                    sender: email || "Inconnu",
+                    subject: messageHeader.subject || "Sujet non défini",
                     date: messageHeader.date,
-                    taille: messageHeader.size,
-                    contenu: bodyData.body || "Mail vide",
-                    piecesJointes: attachmentType,
-                    dossier: folder.name
+                    size: messageHeader.size,
+                    content: bodyData.body || "Mail vide",
+                    attachments: attachmentType,
+                    folder: folder.name
                 };
 
                 currentEmails.push(emailInfo);

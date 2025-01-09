@@ -57,11 +57,11 @@ async function initTags() {
         }
     }
 
-    const storedDossierActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
+    const storedFolderActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
     for (const [key] of Object.entries(tagsData)) {
-        storedDossierActive[key] = { active: tagsData[key].active };
+        storedFolderActive[key] = { active: tagsData[key].active };
     }
-    localStorage.setItem('etatBalises', JSON.stringify(storedDossierActive));
+    localStorage.setItem('etatBalises', JSON.stringify(storedFolderActive));
 }
 
 async function applyTagToMail(mailId, value, type) {
@@ -91,16 +91,14 @@ async function applyTagToMail(mailId, value, type) {
         }
     }
 
-    const storedDossierActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
-
-    if (tagKey && storedDossierActive[tagKey].active && tags[tagKey]) {
+    const storedFolderActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
+    if (tagKey && storedFolderActive[tagKey].active && tags[tagKey]) {
         let message = await browser.messages.get(mailId);
         let existingTags = message.tags || [];
-
         if (!existingTags.includes(tagKey)) {
             existingTags.push(tagKey);
             await browser.messages.update(mailId, { tags: existingTags });
-            // console.log(`Tag applied: ${tags[tagKey].tag} to mail ID: ${mailId}`);
+            //console.log(`Le tags ${tagKey} est bien activé, le tag est appliqué au mail ID: ${mailId}`);
         } else {
             // console.log(`Tag already exists: ${tags[tagKey].tag} for mail ID: ${mailId}`);
         }
