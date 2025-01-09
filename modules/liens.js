@@ -36,7 +36,6 @@ const blackListKey = 'domain-blacklist';
 browser.storage.sync.get(whitelistKey).then(result => {
     if (result[whitelistKey]) {
         whiteListDomaines = result[whitelistKey];
-        console.log(whiteListDomaines);
     }
 });
 
