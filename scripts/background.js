@@ -56,15 +56,11 @@ async function displayMailLists() {
                 }
 
                 await applyTagToMail(email.id, mailStatus, "mail");
+                
                 let type;
-
-                /**
-                 * A réfléchir si en meme temps que toutes ses vérif on rajoute ou pas une table pour chaque type de tag
-                 * du moins où on stock les mails suspect, vérifié et non vérifié pour ne pas avoir à les rechercher à chaque fois dans tout les mails.
-                 */
-
                 let resultatEtat = [mailStatus, linkStatus, email.piecesJointes];
-                console.log(`La valeur du mail pour la pièce jointe : ${email.piecesJointes}`);
+
+                    console.log(`Les valeurs après analyse pour le mail ${email.id} sont : ${resultatEtat}`);
 
                 if (resultatEtat.includes(-1)) {
                     if (mailStatus === -1) {
@@ -77,25 +73,6 @@ async function displayMailLists() {
                         type = "fichier";
                     }
                     await deplacerMessages([email.id], accountId + "://INBOX/Malicious", type);
-                } else if (resultatEtat[0] === 1 && resultatEtat[1] === 1 && resultatEtat[2] === 0 || resultatEtat[0] === 1 && resultatEtat[1] === 2 && resultatEtat[2] === 0) {
-                    if (mailStatus === 1) {
-                        type = "mail";
-                    }
-                    if (linkStatus === 1) {
-                        type = "lien";
-                    }
-                    await deplacerMessages([email.id], accountId + "://INBOX/Verified", type);
-                } else {
-                    if (mailStatus === 0) {
-                        type = "mail";
-                    }
-                    if (linkStatus === 0) {
-                        type = "lien";
-                    }
-                    if (email.piecesJointes === 1) {
-                        type = "fichier";
-                    }
-                    await deplacerMessages([email.id], accountId + "://INBOX/Unverified", type);
                 }
             }
         }
