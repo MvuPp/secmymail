@@ -3,12 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Récupérer l'objet dossierActive depuis le localStorage
     const storedEtatsBalises = JSON.parse(localStorage.getItem('etatBalises')) || {};
-    console.log("storedEtatsBalises", storedEtatsBalises)
-    console.log("get", localStorage.getItem('etatBalises'))
 
     radioButtons.forEach(button => {
-        console.log("Handling " + button);
-
         if (storedEtatsBalises[button.name]?.active) {
             button.classList.add('active');
             button.style.backgroundColor = 'green';
@@ -23,12 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             button.style.backgroundColor = isActive ? 'green' : 'red';
 
-            console.log("button.name", button.name)
-
             const storedDossierActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
             storedDossierActive[button.name] = { active: isActive };
             localStorage.setItem('etatBalises', JSON.stringify(storedDossierActive));
-            //changeEtatDossier(button.name, isActive);
         });
     });
 });
