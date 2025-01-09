@@ -64,6 +64,7 @@ async function displayMailLists() {
                  */
 
                 let resultatEtat = [mailStatus, linkStatus, email.piecesJointes];
+                console.log(`La valeur du mail pour la pièce jointe : ${email.piecesJointes}`);
 
                 if (resultatEtat.includes(-1)) {
                     if (mailStatus === -1) {
