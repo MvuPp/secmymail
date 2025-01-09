@@ -56,6 +56,12 @@ async function initTags() {
             tags[key] = await browser.messages.tags.create(key, data.tag, data.color);
         }
     }
+
+    const storedDossierActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
+    for (const [key] of Object.entries(tagsData)) {
+        storedDossierActive[key] = { active: tagsData[key].active };
+    }
+    localStorage.setItem('etatBalises', JSON.stringify(storedDossierActive));
 }
 
 async function applyTagToMail(mailId, value, type) {
@@ -85,7 +91,9 @@ async function applyTagToMail(mailId, value, type) {
         }
     }
 
-    if (tagKey && tagsData[tagKey].active && tags[tagKey]) {
+    const storedDossierActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
+
+    if (tagKey && storedDossierActive[tagKey].active && tags[tagKey]) {
         let message = await browser.messages.get(mailId);
         let existingTags = message.tags || [];
 
@@ -97,7 +105,7 @@ async function applyTagToMail(mailId, value, type) {
             // console.log(`Tag already exists: ${tags[tagKey].tag} for mail ID: ${mailId}`);
         }
     } else {
-        console.error(`Invalid tag key, tag not initialized, or tag not active for value: ${value}`);
+        console.error(`Le tags ${tagKey} n'existe pas ou n'est pas actif`);
     }
 }
 

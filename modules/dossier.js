@@ -53,6 +53,11 @@ async function initDossiers() {
             await creerDossier(account + "://INBOX", key);
         }
     }
+
+    for (const [key] of Object.entries(dossierActive)) {
+        storedDossierActive[key] = { active: dossierActive[key].active };
+    }
+    localStorage.setItem('etatBalises', JSON.stringify(storedDossierActive));
 }
 
 async function changeEtatDossier(dossier, etat) {
