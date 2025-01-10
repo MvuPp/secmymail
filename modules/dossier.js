@@ -19,7 +19,12 @@ const folderActive = {
 import { logAccounts } from "../scripts/background.js";
 const accounts = await logAccounts();
 const account = accounts[0];
-
+/**
+ * Crée un nouveau dossier.
+ * @param {string} folderId - L'ID du dossier parent.
+ * @param {string} childName - Le nom du nouveau dossier.
+ * @returns {Promise<Object|null>} - Retourne le nouveau dossier créé ou null en cas d'erreur.
+ */
 async function createFolder(folderId, childName) {
     try {
         const newFolder = await messenger.folders.create(folderId, childName);
@@ -31,13 +36,19 @@ async function createFolder(folderId, childName) {
     }
 }
 
+/**
+ * Déplace des messages vers un dossier spécifié.
+ * @param {Array<string>} messageIds - Les IDs des messages à déplacer.
+ * @param {string} folderId - L'ID du dossier de destination.
+ * @param {string} type - Le type de message (mail, link, file).
+ */
 async function moveMessages(messageIds, folderId, type) {
     const storedFolderActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
 
     try {
         if (storedFolderActive[type]?.active) {
             await messenger.messages.move(messageIds, folderId);
-            //console.log(`Déplacement activé pour les ${type}s, le mail est déplacé vers le dossier : ${folderId}`);
+            console.log(`Déplacement activé pour les ${type}s, le mail est déplacé vers le dossier : ${folderId}`);
         } else {
             console.error(`Déplacement désactivé pour les ${type}s, le mail n'est pas déplacé`);
         }
@@ -46,6 +57,9 @@ async function moveMessages(messageIds, folderId, type) {
     }
 }
 
+/**
+ * Initialise les dossiers en fonction des données stockées.
+ */
 async function initFolders() {
     const storedFolderActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
     for (const [key] of Object.entries(folderData)) {
@@ -60,12 +74,21 @@ async function initFolders() {
     localStorage.setItem('etatBalises', JSON.stringify(storedFolderActive));
 }
 
+/**
+ * Change l'état d'un dossier (actif ou inactif).
+ * @param {string} folder - Le nom du dossier.
+ * @param {boolean} state - L'état du dossier (true pour actif, false pour inactif).
+ */
 async function changeFolderState(folder, state) {
     if (state) await createFolder(account + "://INBOX", folder);
     else await deleteFolder(folder);
     console.log("changement d'état du dossier : ", folder);
 }
 
+/**
+ * Supprime un dossier spécifié.
+ * @param {string} folder - Le nom du dossier à supprimer.
+ */
 async function deleteFolder(folder) {
     try {
         const value = account + "://INBOX/" + folder;

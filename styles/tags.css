@@ -1,13 +1,14 @@
-
+/* Styles généraux pour le document */
 body {
     height: 500px;
 }
 
-
+/* Conteneur principal */
 .container {
     width: 100%;
 }
 
+/* Tableau des tags */
 #taglist {
     width: 100%;
     border-collapse: collapse;

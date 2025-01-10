@@ -2,8 +2,10 @@ import { tagsData } from '../modules/tags.js';
 
 const taglistTbody = document.querySelector('#taglist tbody');
 
+/**
+ * Initialise la liste des tags et affiche les tags existants.
+ */
 async function initTaglist() {
-
     const tags = await browser.messages.tags.list();
     const tagDict = Object.fromEntries(tags.map(tag => [tag.key, tag]));
 

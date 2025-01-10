@@ -1,3 +1,7 @@
+/**
+ * Associe un bouton à une action de lien ou de popup.
+ * @param {HTMLElement} button - Le bouton à associer.
+ */
 function linkButton(button) {
     if (button.hasAttribute("popup")) {
         button.addEventListener("click", function() {
@@ -14,11 +18,16 @@ function linkButton(button) {
         });
     }
 }
+
 document.querySelectorAll("button[link]").forEach(function(button) {
     linkButton(button);
 });
 
-
+/**
+ * Trouve un template HTML par son nom.
+ * @param {string} templateName - Le nom du template à trouver.
+ * @returns {HTMLElement|null} - Retourne l'élément du template ou null s'il n'est pas trouvé.
+ */
 function findTemplate(templateName) {
     for (const node of document.querySelectorAll("div[template]")) {
         let template = node.getAttribute("template");
@@ -29,6 +38,12 @@ function findTemplate(templateName) {
     return null;
 }
 
+/**
+ * Charge un template HTML depuis une URL.
+ * @param {string} url - L'URL du template à charger.
+ * @returns {Promise<string>} - Retourne le contenu HTML du template.
+ * @throws {Error} - Lance une erreur si le chargement échoue.
+ */
 async function loadHTMLTemplate(url) {
     const response = await fetch(url);
     if (!response.ok) {
@@ -37,6 +52,9 @@ async function loadHTMLTemplate(url) {
     return await response.text();
 }
 
+/**
+ * Insère les templates HTML dans la page.
+ */
 async function insertTemplates() {
     const templates = document.querySelectorAll("div[template]");
 
@@ -60,14 +78,24 @@ async function insertTemplates() {
     }
 }
 
+/**
+ * Gère le clic sur le bouton de retour.
+ */
 function handleBackArrowClick() {
     window.history.back();
 }
 
+/**
+ * Gère le clic sur le bouton de fermeture.
+ */
 function handleCloseClick() {
     window.close();
 }
 
+/**
+ * Gère le clic sur le bouton d'accueil.
+ * @param {boolean} value - Indique si la redirection doit se faire vers '../popup.html' ou 'popup.html'.
+ */
 function handleHomeClick(value) {
     if (value) {
         window.location.href = '../popup.html';
@@ -76,7 +104,6 @@ function handleHomeClick(value) {
     }
 }
 
-    
 document.addEventListener('DOMContentLoaded', function() {
     const backArrowButton = document.getElementById('back_arrow');
     const closeButton = document.getElementById('close');
@@ -107,10 +134,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    
 });
 
 window.addEventListener("DOMContentLoaded", insertTemplates);

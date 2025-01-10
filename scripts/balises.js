@@ -1,3 +1,6 @@
+/**
+ * Initialise les boutons radio et leur état en fonction des données stockées.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     const radioButtons = document.querySelectorAll('.radioButton');
 
