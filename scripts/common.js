@@ -60,4 +60,50 @@ async function insertTemplates() {
     }
 }
 
+function handleBackArrowClick() {
+    window.history.back();
+}
+
+function handleCloseClick() {
+    window.close();
+}
+
+function handleHomeClick() {
+    window.location.href = 'popup.html';
+}
+    
+document.addEventListener('DOMContentLoaded', function() {
+    const backArrowButton = document.getElementById('back_arrow');
+    const closeButton = document.getElementById('close');
+    const logoButton = document.getElementById('logo_popup');
+    const homeButton = document.getElementById('logo');
+
+    const currentPage = window.location.pathname.split('/').pop();
+    const pagesToClose = ['domain-blacklist.html', 'domain-whitelist.html', 'email-blacklist.html', 'email-whitelist.html', 'tags.html'];
+
+    if (backArrowButton) {
+        backArrowButton.addEventListener('click', handleBackArrowClick);
+    }
+
+    if (closeButton && pagesToClose.includes(currentPage)) {
+        closeButton.addEventListener('click', handleCloseClick);
+    }
+
+    if (logoButton) {
+        logoButton.addEventListener('click', handleCloseClick);
+    }
+
+    if (homeButton) {
+        homeButton.addEventListener('click', handleHomeClick);
+    }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+});
+
+
+
 window.addEventListener("DOMContentLoaded", insertTemplates);

@@ -59,15 +59,15 @@ h1 {
     background-color: #ff8c0085;
 }
 
-.menu-icon button {
-    background-color: #FFA500;
+.back_arrow button {
+    background-color: transparent;
     border: none;
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
 }
 
-.menu-icon img {
+.back_arrow img {
     width: 20px;
     height: 20px;
 }
