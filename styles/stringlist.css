@@ -23,7 +23,7 @@ button {
     font-size: 16px;
 }
 
-button:hover {
+.stringlist-btn:hover {
     background-color: #e8882275;
 }
 
