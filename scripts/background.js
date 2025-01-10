@@ -1,3 +1,7 @@
+/**
+ * Récupère et filtre les comptes de messagerie.
+ * @returns {Promise<Array<string>|null>} - Retourne une liste des IDs des comptes filtrés ou null en cas d'erreur.
+ */
 async function logAccounts() {
     try {
         const accounts = await browser.accounts.list();
@@ -15,24 +19,29 @@ import { initTags, applyTagToMail } from '../modules/tags.js';
 import { checkForNewMails } from '../modules/rechercheMails.js';
 import { compareMails } from '../modules/comparaisonMail.js';
 import { extractLinks, compareLinks } from '../modules/liens.js';
-import { getAllContacts, addWhiteList, removeWhiteList } from '../modules/carnetAdresse.js';
 import { initFolders, moveMessages } from '../modules/dossier.js';
 
+/**
+ * Supprime les tags existants des messages.
+ * @param {Array<Object>} result - La liste des messages.
+ */
 async function removeExistingTags(result) {
     for (const message of result) {
         await browser.messages.update(message.id, { tags: [] });
     }
 }
 
+/**
+ * Affiche les listes de mails et applique les tags et actions nécessaires.
+ */
 async function displayMailLists() {
     const accountIds = await logAccounts();
     if (!accountIds) return;
     let tagCheck = false;
-    let contactCheck = 0;
     await initFolders();
 
+    // Fonction de vérification périodique des nouveaux mails
     const periodicCheck = async () => {
-
         for (const accountId of accountIds) {
             const result = await checkForNewMails(accountId);
             if (!tagCheck) {
@@ -42,6 +51,9 @@ async function displayMailLists() {
             for (const email of result.newEmails) {
                 const mailStatus = await compareMails(email);
 
+                // Vérification des contacts
+
+                //Extraction des liens et comparaison
                 const links = extractLinks(email.content);
                 let linkStatus = 2;
                 if (links.length !== 0) {
@@ -49,14 +61,17 @@ async function displayMailLists() {
                     await applyTagToMail(email.id, linkStatus, "lien");
                 }
 
-                if (email.attachments === 1 ) {
+                // Vérification des pièces jointes
+                if (email.attachments === 1) {
                     await applyTagToMail(email.id, 1, "fichier");
                 } else if (email.attachments === -1) {
                     await applyTagToMail(email.id, -1, "fichier");
                 }
 
+                // Vérification des contacts
                 await applyTagToMail(email.id, mailStatus, "mail");
                 
+                // Vérification des mails malveillants et déplacement
                 let type;
                 let statusResult = [mailStatus, linkStatus, email.attachments];
                 if (statusResult.includes(-1)) {

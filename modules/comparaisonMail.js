@@ -15,14 +15,29 @@ browser.storage.sync.get(blackListKey).then(result => {
     }
 });
 
+/**
+ * Compare l'email avec la liste blanche.
+ * @param {Object} email - L'email à comparer.
+ * @returns {Promise<boolean>} - Retourne true si l'email est dans la liste blanche, sinon false.
+ */
 async function compareWhiteList(email) {
     return whiteListEmails.some(item => item === email.sender);
 }
 
+/**
+ * Compare l'email avec la liste noire.
+ * @param {Object} email - L'email à comparer.
+ * @returns {Promise<boolean>} - Retourne true si l'email est dans la liste noire, sinon false.
+ */
 async function compareBlackList(email) {
     return blackListEmails.some(item => item === email.sender);
 }
 
+/**
+ * Compare l'email avec les listes blanche et noire.
+ * @param {Object} email - L'email à comparer.
+ * @returns {Promise<number>} - Retourne 1 si l'email est dans la liste blanche, -1 s'il est dans la liste noire, sinon 0.
+ */
 async function compareMails(email) {
     let result;
     let isWhiteListed = await compareWhiteList(email);

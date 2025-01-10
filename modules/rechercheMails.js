@@ -2,6 +2,10 @@ let foldersWithMessages = [];
 let previousMailCount = 0;
 let previousEmails = [];
 
+/**
+ * Récupère et développe les sous-dossiers d'un dossier donné.
+ * @param {string} folderId - L'ID du dossier parent.
+ */
 async function getAndExpandSubFolders(folderId) {
     try {
         const subFolders = await browser.folders.getSubFolders(folderId);
@@ -27,6 +31,11 @@ async function getAndExpandSubFolders(folderId) {
     }
 }
 
+/**
+ * Récupère le corps complet d'un message.
+ * @param {string} messageId - L'ID du message.
+ * @returns {Promise<Object>} - Retourne un objet contenant le corps du message et les pièces jointes.
+ */
 async function getFullMessageBody(messageId) {
     let fullMessage = await messenger.messages.getFull(messageId);
     let fullAttachments = await messenger.messages.listAttachments(messageId);
@@ -50,6 +59,10 @@ async function getFullMessageBody(messageId) {
     return { body, fullAttachments };
 }
 
+/**
+ * Affiche les messages des dossiers sauvegardés.
+ * @returns {Promise<Array<Object>>} - Retourne une liste d'objets contenant les informations des emails.
+ */
 async function displayMessagesFromSavedFolders() {
     let currentEmails = [];
     for (const folderWithMessages of foldersWithMessages) {
@@ -62,8 +75,9 @@ async function displayMessagesFromSavedFolders() {
                 
                 const emailMatch = messageHeader.author.match(/<(.+)>/);
                 const email = emailMatch ? emailMatch[1] : messageHeader.author;
+                
+                // Vérification de l'extension de la pièces jointes
                 let attachmentType = 0;
-
                 const bodyData = await getFullMessageBody(message.id);
                 const dangerousExtensions = ['test', 'exe', 'bat', 'com', 'cmd', 'scr', 'pif', 'cpl', 'js', 'jse', 'vbs', 'vbe', 'wsf', 'wsh', 'msi', 'msp', 'jar'];
                 if (bodyData.fullAttachments.length > 0) {
@@ -97,6 +111,11 @@ async function displayMessagesFromSavedFolders() {
     return currentEmails;
 }
 
+/**
+ * Explore les dossiers d'un compte donné.
+ * @param {string} accountId - L'ID du compte.
+ * @returns {Promise<Array<Object>>} - Retourne une liste d'objets contenant les informations des emails.
+ */
 async function exploreFolders(accountId) {
     try {
         foldersWithMessages = [];
@@ -118,6 +137,11 @@ async function exploreFolders(accountId) {
     }
 }
 
+/**
+ * Vérifie la présence de nouveaux mails dans un compte donné.
+ * @param {string} accountId - L'ID du compte.
+ * @returns {Promise<Object>} - Retourne un objet contenant les nouveaux emails et leur nombre.
+ */
 async function checkForNewMails(accountId) {
     let newEmails = [];
     let newMailCount = 0;
@@ -139,7 +163,11 @@ async function checkForNewMails(accountId) {
     return { newEmails, length: newMailCount };
 }
 
-// Méthode pour revérifier tous les mails
+/**
+ * Revérifie tous les mails d'un compte donné.
+ * @param {string} accountId - L'ID du compte.
+ * @returns {Promise<Object>} - Retourne un objet contenant les nouveaux emails et leur nombre.
+ */
 async function checkForMails(accountId) {
     let newEmails = [];
     let newMailCount = 0;

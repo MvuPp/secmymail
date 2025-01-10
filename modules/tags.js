@@ -43,6 +43,9 @@ const tagsData = {
 
 const tags = {};
 
+/**
+ * Initialise les tags en fonction des données stockées.
+ */
 async function initTags() {
     let tagList = await browser.messages.tags.list();
     let tagDict = Object.fromEntries(tagList.map(tag => [tag.key, tag]));
@@ -64,6 +67,12 @@ async function initTags() {
     localStorage.setItem('etatBalises', JSON.stringify(storedFolderActive));
 }
 
+/**
+ * Applique un tag à un mail.
+ * @param {string} mailId - L'ID du mail.
+ * @param {number} value - La valeur du tag (1 pour vérifié, 0 pour non vérifié, -1 pour malveillant).
+ * @param {string} type - Le type de tag (mail, lien, fichier).
+ */
 async function applyTagToMail(mailId, value, type) {
     let tagKey;
 
@@ -91,6 +100,7 @@ async function applyTagToMail(mailId, value, type) {
         }
     }
 
+    // Vérification de l'état actif du tag et application du tag
     const storedFolderActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
     if (tagKey && storedFolderActive[tagKey].active && tags[tagKey]) {
         let message = await browser.messages.get(mailId);
@@ -107,6 +117,12 @@ async function applyTagToMail(mailId, value, type) {
     }
 }
 
+/**
+ * Met à jour la valeur d'un tag.
+ * @param {string} name - Le nom du tag.
+ * @param {string} value - La nouvelle valeur du tag.
+ * @param {boolean} active - L'état actif du tag.
+ */
 async function updateTagValue(name, value, active) {
     let tag = tags[name];
 
@@ -121,6 +137,10 @@ async function updateTagValue(name, value, active) {
     }
 }
 
+/**
+ * Récupère l'état actif des tags.
+ * @returns {Promise<Object>} - Retourne un objet contenant les tags et leur état actif.
+ */
 async function getTagsActive() {
     const tagsActive = {};
     for (let [key, data] of Object.entries(tagsData)) {

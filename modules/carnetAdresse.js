@@ -1,6 +1,5 @@
 /**
- * Ici il faudrai ajouter sur la page whitelist.html un bouton pour actier ou désactiver cette fonctionnalité
- * ce qui veut dire si activer alors ajouter en whitelist sinon les supprimer de la whitelist.
+ * Fonctionnalité à venir : récupérer les contacts du carnet d'adresses et les ajouter à la liste blanche
  */
 
 async function listAddressBook(parentId) {

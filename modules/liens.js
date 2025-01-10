@@ -3,6 +3,11 @@
  * la confirmation supplémentaire.
  */
 
+/**
+ * Extrait les liens d'un texte donné.
+ * @param {string} text - Le texte contenant les liens.
+ * @returns {Array<string>} - Retourne une liste des domaines extraits des liens.
+ */
 function extractLinks(text) {
     const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
 
@@ -45,14 +50,29 @@ browser.storage.sync.get(blackListKey).then(result => {
     }
 });
 
+/**
+ * Compare le lien avec la liste blanche.
+ * @param {string} link - Le lien à comparer.
+ * @returns {Promise<boolean>} - Retourne true si le lien est dans la liste blanche, sinon false.
+ */
 async function compareWhiteList(link) {
     return whiteListDomains.some(item => link.startsWith(item));
 }
 
+/**
+ * Compare le lien avec la liste noire.
+ * @param {string} link - Le lien à comparer.
+ * @returns {Promise<boolean>} - Retourne true si le lien est dans la liste noire, sinon false.
+ */
 async function compareBlackList(link) {
     return blackListDomains.some(item => link.startsWith(item));
 }
 
+/**
+ * Compare les liens avec les listes blanche et noire.
+ * @param {Array<string>} links - Les liens à comparer.
+ * @returns {Promise<number>} - Retourne 1 si tous les liens sont dans la liste blanche, -1 si un lien est dans la liste noire, sinon 0.
+ */
 async function compareLinks(links) {
     let results = [];
     for (let link of links) {
