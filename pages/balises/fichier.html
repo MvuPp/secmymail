@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecMyMail - Gestionnaire des balises</title>
+    <link rel="stylesheet" href="../../styles/balise.css">
+    <script defer src="../../scripts/common.js"></script>
+    <script defer type="module" src="../../scripts/balises.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="back_arrow">
+                <button id="back_arrow">
+                    <img src="../../assets/back_arrow.png" alt="Menu">
+                </button>
+            </div>
+            <h1>SecMyMail</h1>
+            <div class="logo">
+                <button id = "logo" name="balise">
+                    <img src="../../assets/logo.png" alt="SecMyMail Logo">
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <h3>Fichier</h3>
+            <div class="list-container" id="fichier-list">
+                <p>Liste des tags disponibles pour les fichiers</p>
+                <div class="list-item"><span> <button class="radioButton balise" name="secmymail.contained_file"></button></span>Fichier - présent<span></span> </div>
+                <div class="list-item"><span> <button class="radioButton balise" name="secmymail.malicious_file"></button></span>Fichier - malveillant<span></span> </div>
+            </div>
+
+            <div class="dossier-container">
+                <p>Activer le déplacement des mails suspects</p>
+                <div class="list-item"><span> <button class="radioButton balise" id="dossier" name="fichier"></button> </span>Déplacement des mails<span></span></div>
+            </div>
+        </main>
+        <footer>
+            <p>Par : MailArmor</p>
+        </footer>
+    </div>
+</body>
+</html>

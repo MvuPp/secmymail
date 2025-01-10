@@ -1,32 +1,47 @@
-let whiteListMails = [];
-let blackListMails = [];
-const whitelistKey = 'whitelist';
-const blackListKey = 'blacklist';
+let whiteListEmails = [];
+let blackListEmails = [];
+const whiteListKey = 'email-whitelist';
+const blackListKey = 'email-blacklist';
 
-browser.storage.sync.get(whitelistKey).then(result => {
-    if (result[whitelistKey]) {
-        whiteListMails = result[whitelistKey].filter(item => item.type === 'mail');
+browser.storage.sync.get(whiteListKey).then(result => {
+    if (result[whiteListKey]) {
+        whiteListEmails = result[whiteListKey];
     }
 });
 
 browser.storage.sync.get(blackListKey).then(result => {
     if (result[blackListKey]) {
-        blackListMails = result[blackListKey].filter(item => item.type === 'mail');
+        blackListEmails = result[blackListKey];
     }
 });
 
-async function comparerWhiteList(email) {
-    return whiteListMails.some(item => item.value === email.expediteur);
+/**
+ * Compare l'email avec la liste blanche.
+ * @param {Object} email - L'email à comparer.
+ * @returns {Promise<boolean>} - Retourne true si l'email est dans la liste blanche, sinon false.
+ */
+async function compareWhiteList(email) {
+    return whiteListEmails.some(item => item === email.sender);
 }
 
-async function comparerBlackList(email) {
-    return blackListMails.some(item => item.value === email.expediteur);
+/**
+ * Compare l'email avec la liste noire.
+ * @param {Object} email - L'email à comparer.
+ * @returns {Promise<boolean>} - Retourne true si l'email est dans la liste noire, sinon false.
+ */
+async function compareBlackList(email) {
+    return blackListEmails.some(item => item === email.sender);
 }
 
-async function comparerMails(email) {
+/**
+ * Compare l'email avec les listes blanche et noire.
+ * @param {Object} email - L'email à comparer.
+ * @returns {Promise<number>} - Retourne 1 si l'email est dans la liste blanche, -1 s'il est dans la liste noire, sinon 0.
+ */
+async function compareMails(email) {
     let result;
-    let isWhiteListed = await comparerWhiteList(email);
-    let isBlackListed = await comparerBlackList(email);
+    let isWhiteListed = await compareWhiteList(email);
+    let isBlackListed = await compareBlackList(email);
 
     if (isWhiteListed) {
         result = 1;
@@ -38,4 +53,4 @@ async function comparerMails(email) {
     return result;
 }
 
-export { comparerWhiteList, comparerBlackList, comparerMails };
+export { compareWhiteList, compareBlackList, compareMails };

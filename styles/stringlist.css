@@ -1,3 +1,4 @@
+/* Styles pour les champs de texte et les boutons */
 input[type="text"], button {
     width: 100%;
     padding: 10px;
@@ -23,10 +24,11 @@ button {
     font-size: 16px;
 }
 
-button:hover {
+.stringlist-btn:hover {
     background-color: #e8882275;
 }
 
+/* Styles pour les wrappers d'input */
 .input-wrapper {
     position: relative;
     display: flex;
@@ -77,6 +79,7 @@ button:hover {
     display: block;
 }
 
+/* Styles pour les affichages de type */
 .input-wrapper .type-display {
     text-align: center;
     padding: 3px;
@@ -90,6 +93,7 @@ button:hover {
     font-size: 15px;
 }
 
+/* Styles pour les choix de liste blanche */
 .choix-whitelist {
     display: flex;
     justify-content: space-between;
@@ -97,17 +101,12 @@ button:hover {
     gap: 10px;
 }
 
+/* Styles pour le contenu */
 .content {
     flex-grow: 1;
     padding: 20px;
     margin-bottom: 5px;
     overflow-y: auto;
-}
-
-.mail-btn:disabled, .domaine-btn:disabled, #addButton:disabled {
-    background-color: #e8882275;
-    color: #fff;
-    cursor: default;
 }
 
 .content::-webkit-scrollbar {
@@ -127,4 +126,19 @@ button:hover {
 
 .content::-webkit-scrollbar-thumb:hover {
     background-color: #555;
+}
+
+/* Styles pour les boutons désactivés */
+.mail-btn:disabled, .domaine-btn:disabled, #addButton:disabled {
+    background-color: #e8882275;
+    color: #fff;
+    cursor: default;
+}
+
+/* Styles pour le conteneur de boutons */
+#stringlist-btn-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    gap: 20px;
 }

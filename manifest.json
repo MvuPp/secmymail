@@ -35,7 +35,9 @@
         "storage",
         "messagesMove",
         "messagesTags",
-        "messagesTagsList"
+        "messagesTagsList",
+        "addressBooks",
+        "accountsFolders"
     ],
     "background": {
         "scripts": ["scripts/background.js"],
@@ -43,7 +45,7 @@
 
     },
     "options_ui": {
-        "page": "pages/balise.html",
+        "page": "pages/popup.html",
         "open_in_tab": true
     },
     "icons": {
