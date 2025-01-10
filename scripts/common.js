@@ -68,9 +68,14 @@ function handleCloseClick() {
     window.close();
 }
 
-function handleHomeClick() {
-    window.location.href = 'popup.html';
+function handleHomeClick(value) {
+    if (value) {
+        window.location.href = '../popup.html';
+    } else {
+        window.location.href = 'popup.html';
+    }
 }
+
     
 document.addEventListener('DOMContentLoaded', function() {
     const backArrowButton = document.getElementById('back_arrow');
@@ -94,16 +99,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (homeButton) {
-        homeButton.addEventListener('click', handleHomeClick);
+        homeButton.addEventListener('click', function(event) {
+            if (homeButton.name === 'balise') {
+                handleHomeClick(true);
+            } else {
+                handleHomeClick(false);
+            }
+        });
     }
 });
-
-
 
 document.addEventListener('DOMContentLoaded', function() {
     
 });
-
-
 
 window.addEventListener("DOMContentLoaded", insertTemplates);

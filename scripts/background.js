@@ -59,7 +59,6 @@ async function displayMailLists() {
                 
                 let type;
                 let statusResult = [mailStatus, linkStatus, email.attachments];
-
                 if (statusResult.includes(-1)) {
                     if (mailStatus === -1) {
                         type = "mail";
