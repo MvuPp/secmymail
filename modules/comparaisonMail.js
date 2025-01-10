@@ -1,32 +1,32 @@
-let whiteListMails = [];
-let blackListMails = [];
-const whitelistKey = 'email-whitelist';
+let whiteListEmails = [];
+let blackListEmails = [];
+const whiteListKey = 'email-whitelist';
 const blackListKey = 'email-blacklist';
 
-browser.storage.sync.get(whitelistKey).then(result => {
-    if (result[whitelistKey]) {
-        whiteListMails = result[whitelistKey];
+browser.storage.sync.get(whiteListKey).then(result => {
+    if (result[whiteListKey]) {
+        whiteListEmails = result[whiteListKey];
     }
 });
 
 browser.storage.sync.get(blackListKey).then(result => {
     if (result[blackListKey]) {
-        blackListMails = result[blackListKey];
+        blackListEmails = result[blackListKey];
     }
 });
 
-async function comparerWhiteList(email) {
-    return whiteListMails.some(item => item === email.expediteur);
+async function compareWhiteList(email) {
+    return whiteListEmails.some(item => item === email.sender);
 }
 
-async function comparerBlackList(email) {
-    return blackListMails.some(item => item === email.expediteur);
+async function compareBlackList(email) {
+    return blackListEmails.some(item => item === email.sender);
 }
 
-async function comparerMails(email) {
+async function compareMails(email) {
     let result;
-    let isWhiteListed = await comparerWhiteList(email);
-    let isBlackListed = await comparerBlackList(email);
+    let isWhiteListed = await compareWhiteList(email);
+    let isBlackListed = await compareBlackList(email);
 
     if (isWhiteListed) {
         result = 1;
@@ -38,4 +38,4 @@ async function comparerMails(email) {
     return result;
 }
 
-export { comparerWhiteList, comparerBlackList, comparerMails };
+export { compareWhiteList, compareBlackList, compareMails };

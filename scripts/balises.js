@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const radioButtons = document.querySelectorAll('.radioButton');
 
-    // Récupérer l'objet dossierActive depuis le localStorage
-    const storedEtatsBalises = JSON.parse(localStorage.getItem('etatBalises')) || {};
+    // Récupérer l'objet folderActive depuis le localStorage
+    const storedTagStates = JSON.parse(localStorage.getItem('etatBalises')) || {};
 
     radioButtons.forEach(button => {
-        if (storedEtatsBalises[button.name]?.active) {
+        if (storedTagStates[button.name]?.active) {
             button.classList.add('active');
             button.style.backgroundColor = 'green';
         } else {
@@ -19,10 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             button.style.backgroundColor = isActive ? 'green' : 'red';
 
-            const storedDossierActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
-            storedDossierActive[button.name] = { active: isActive };
-            localStorage.setItem('etatBalises', JSON.stringify(storedDossierActive));
+            const storedFolderActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
+            storedFolderActive[button.name] = { active: isActive };
+            localStorage.setItem('etatBalises', JSON.stringify(storedFolderActive));
         });
     });
 });
-

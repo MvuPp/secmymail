@@ -13,10 +13,10 @@ async function logAccounts() {
 
 import { initTags, applyTagToMail } from '../modules/tags.js';
 import { checkForNewMails } from '../modules/rechercheMails.js';
-import { comparerMails } from '../modules/comparaisonMail.js';
-import { extraireLiens, comparerLiens } from '../modules/liens.js';
-import { recupererTousLesContacts, ajouterWhiteList, supprimerWhiteList } from '../modules/carnetAdresse.js';
-import { initDossiers, deplacerMessages } from '../modules/dossier.js';
+import { compareMails } from '../modules/comparaisonMail.js';
+import { extractLinks, compareLinks } from '../modules/liens.js';
+import { getAllContacts, addWhiteList, removeWhiteList } from '../modules/carnetAdresse.js';
+import { initFolders, moveMessages } from '../modules/dossier.js';
 
 async function removeExistingTags(result) {
     for (const message of result) {
@@ -29,7 +29,7 @@ async function displayMailLists() {
     if (!accountIds) return;
     let tagCheck = false;
     let contactCheck = 0;
-    await initDossiers();
+    await initFolders();
 
     const periodicCheck = async () => {
 
@@ -40,39 +40,37 @@ async function displayMailLists() {
                 tagCheck = true;
             }
             for (const email of result.newEmails) {
-                const mailStatus = await comparerMails(email);
+                const mailStatus = await compareMails(email);
 
-                const links = extraireLiens(email.contenu);
+                const links = extractLinks(email.content);
                 let linkStatus = 2;
                 if (links.length !== 0) {
-                    linkStatus = await comparerLiens(links);
+                    linkStatus = await compareLinks(links);
                     await applyTagToMail(email.id, linkStatus, "lien");
                 }
 
-                if (email.piecesJointes === 1 ) {
+                if (email.attachments === 1 ) {
                     await applyTagToMail(email.id, 1, "fichier");
-                } else if (email.piecesJointes === -1) {
+                } else if (email.attachments === -1) {
                     await applyTagToMail(email.id, -1, "fichier");
                 }
 
                 await applyTagToMail(email.id, mailStatus, "mail");
                 
                 let type;
-                let resultatEtat = [mailStatus, linkStatus, email.piecesJointes];
+                let statusResult = [mailStatus, linkStatus, email.attachments];
 
-                    console.log(`Les valeurs après analyse pour le mail ${email.id} sont : ${resultatEtat}`);
-
-                if (resultatEtat.includes(-1)) {
+                if (statusResult.includes(-1)) {
                     if (mailStatus === -1) {
                         type = "mail";
                     }
                     if (linkStatus === -1) {
                         type = "lien";
                     }
-                    if (email.piecesJointes === -1) {
+                    if (email.attachments === -1) {
                         type = "fichier";
                     }
-                    await deplacerMessages([email.id], accountId + "://INBOX/Malicious", type);
+                    await moveMessages([email.id], accountId + "://INBOX/Malicious", type);
                 }
             }
         }
