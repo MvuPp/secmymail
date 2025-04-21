@@ -9,29 +9,21 @@
  * @returns {Array<string>} - Retourne une liste des domaines extraits des liens.
  */
 function extractLinks(text) {
-    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+    const urlRegex = /(?:(?:https?:\/\/)?(?:www\.)?)([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?:\/[^\s]*)?/g;
 
-    const links = text.match(urlRegex) || [];
+    const matches = [];
+    let match;
 
-    return links.map(link => {
-        if (link.startsWith("www.")) {
-            link = "http://" + link;
-        }
-        try {
-            const url = new URL(link);
-            return url.hostname;
-        } catch (e) {
-            console.error(`Invalid URL: ${link}`);
-            const domainMatch = link.match(/https?:\/\/([^\/\s]+)/);
-            if (domainMatch) {
-                return domainMatch[1];
-            } else {
-                console.error(`Unable to extract domain from: ${link}`);
-                return null;
-            }
-        }
-    }).filter(domain => domain !== null);
+    while ((match = urlRegex.exec(text)) !== null) {
+        matches.push(match[1].toLowerCase());
+    }
+
+    // Supprimer les doublons
+    const uniqueDomains = [...new Set(matches)];
+
+    return uniqueDomains;
 }
+
 
 let whiteListDomains = [];
 let blackListDomains = [];

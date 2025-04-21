@@ -1,41 +1,41 @@
 const tagsData = {
     "secmymail.verified_sender": {
-        default_color: "#00FF00",
+        color: "#00FF00",
         tag: "Expediteur vérifié",
         active: true
     },
     "secmymail.unverified_sender": {
-        default_color: "#FFFF00",
+        color: "#FFFF00",
         tag: "Expediteur non vérifié",
         active: true
     },
     "secmymail.malicious_sender": {
-        default_color: "#FF0000",
+        color: "#FF0000",
         tag: "Expediteur malveillant",
         active: true
     },
     "secmymail.verified_link": {
-        default_color: "#00FF00",
+        color: "#00FF00",
         tag: "Lien vérifié",
         active: true
     },
     "secmymail.unverified_link": {
-        default_color: "#FFFF00",
+        color: "#FFFF00",
         tag: "Lien non vérifié",
         active: true
     },
     "secmymail.malicious_link": {
-        default_color: "#FF0000",
+        color: "#FF0000",
         tag: "Lien malveillant",
         active: true
     },
     "secmymail.contained_file": {
-        default_color: "#FFA500",
+        color: "#FFA500",
         tag: "Fichier joint",
         active: true
     },
     "secmymail.malicious_file": {
-        default_color: "#FF0000",
+        color: "#FF0000",
         tag: "Fichier malveillant",
         active: true
     }
@@ -47,19 +47,23 @@ const tags = {};
  * Initialise les tags en fonction des données stockées.
  */
 async function initTags() {
-    let tagList = await browser.messages.tags.list();
-    let tagDict = Object.fromEntries(tagList.map(tag => [tag.key, tag]));
+    const tagList = await browser.messages.tags.list();
+    const tagDict = Object.fromEntries(tagList.map(tag => [tag.key, tag]));
 
-    for (let [key, data] of Object.entries(tagsData)) {
+    for (const [key, data] of Object.entries(tagsData)) {
         if (key in tagDict) {
-            let tag = tagDict[key];
-            await browser.messages.tags.update(tag.key, { color: data.color, tag: data.tag });
+            const tag = tagDict[key];
+            await browser.messages.tags.update(tag.key, {
+                color: data.color,
+                tag: data.tag
+            });
             tags[key] = tag;
         } else {
             tags[key] = await browser.messages.tags.create(key, data.tag, data.color);
         }
     }
 
+    // Stockage local de l'état actif des tags
     const storedFolderActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
     for (const [key] of Object.entries(tagsData)) {
         storedFolderActive[key] = { active: tagsData[key].active };
@@ -75,75 +79,88 @@ async function initTags() {
  */
 async function applyTagToMail(mailId, value, type) {
     let tagKey;
-
     if (type === "mail") {
-        if (value === 1) {
-            tagKey = "secmymail.verified_sender";
-        } else if (value === 0) {
-            tagKey = "secmymail.unverified_sender";
-        } else if (value === -1) {
-            tagKey = "secmymail.malicious_sender";
-        }
+        if (value === 1) tagKey = "secmymail.verified_sender";
+        else if (value === 0) tagKey = "secmymail.unverified_sender";
+        else if (value === -1) tagKey = "secmymail.malicious_sender";
     } else if (type === "lien") {
-        if (value === 1) {
-            tagKey = "secmymail.verified_link";
-        } else if (value === 0) {
-            tagKey = "secmymail.unverified_link";
-        } else if (value === -1) {
-            tagKey = "secmymail.malicious_link";
-        }
+        if (value === 1) tagKey = "secmymail.verified_link";
+        else if (value === 0) tagKey = "secmymail.unverified_link";
+        else if (value === -1) tagKey = "secmymail.malicious_link";
     } else if (type === "fichier") {
-        if (value === -1) {
-            tagKey = "secmymail.malicious_file";
-        } else if (value === 1) {
-            tagKey = "secmymail.contained_file";
-        }
+        if (value === 1) tagKey = "secmymail.contained_file";
+        else if (value === -1) tagKey = "secmymail.malicious_file";
     }
 
-    // Vérification de l'état actif du tag et application du tag
+    if (!tagKey) {
+        console.error("TagKey introuvable pour:", { mailId, value, type });
+        return;
+    }
+
     const storedFolderActive = JSON.parse(localStorage.getItem('etatBalises')) || {};
-    if (tagKey && storedFolderActive[tagKey].active && tags[tagKey]) {
-        let message = await browser.messages.get(mailId);
-        let existingTags = message.tags || [];
+    if (!storedFolderActive[tagKey]?.active) {
+        console.warn(`Le tag ${tagKey} est désactivé.`);
+        return;
+    }
+
+    try {
+        const allTags = await browser.messages.tags.list();
+        const tagExists = allTags.find(t => t.key === tagKey);
+
+        if (!tagExists) {
+            const tagDef = tagsData[tagKey];
+            if (!tagDef) throw new Error(`Tag non défini dans tagsData: ${tagKey}`);
+            await browser.messages.tags.create(tagKey, tagDef.tag, tagDef.color);
+        }
+
+        const message = await browser.messages.get(mailId);
+        const existingTags = message.tags || [];
+
         if (!existingTags.includes(tagKey)) {
             existingTags.push(tagKey);
             await browser.messages.update(mailId, { tags: existingTags });
-            //console.log(`Le tags ${tagKey} est bien activé, le tag est appliqué au mail ID: ${mailId}`);
+            console.log(`Tag ${tagKey} appliqué au message ${mailId}`);
         } else {
-            // console.log(`Tag already exists: ${tags[tagKey].tag} for mail ID: ${mailId}`);
+            console.log(`Le message ${mailId} a déjà le tag ${tagKey}`);
         }
-    } else {
-        console.error(`Le tags ${tagKey} n'existe pas ou n'est pas actif`);
+    } catch (error) {
+        console.error(`Erreur lors de l'application du tag ${tagKey} :`, error);
     }
 }
 
 /**
  * Met à jour la valeur d'un tag.
  * @param {string} name - Le nom du tag.
- * @param {string} value - La nouvelle valeur du tag.
- * @param {boolean} active - L'état actif du tag.
+ * @param {string} value - La nouvelle couleur (code hex).
+ * @param {boolean} active - Nouvel état actif du tag.
  */
 async function updateTagValue(name, value, active) {
-    let tag = tags[name];
+    const tag = tags[name];
 
-    if (value === undefined) {
-        value = tagsData[name].default_color;
-    } else if (active === undefined) { 
-        active = tagsData[name].active;
-    }
+    if (value === undefined) value = tagsData[name].color;
+    if (active === undefined) active = tagsData[name].active;
 
     if (tag) {
-        await browser.messages.tags.update(tag.key, { default_color: value, tag: tag.tag, active: active });
+        await browser.messages.tags.update(tag.key, {
+            color: value,
+            tag: tag.tag
+        });
+
+        // Mettre à jour l'état actif localement
+        const stored = JSON.parse(localStorage.getItem('etatBalises')) || {};
+        if (!stored[name]) stored[name] = {};
+        stored[name].active = active;
+        localStorage.setItem('etatBalises', JSON.stringify(stored));
     }
 }
 
 /**
  * Récupère l'état actif des tags.
- * @returns {Promise<Object>} - Retourne un objet contenant les tags et leur état actif.
+ * @returns {Promise<Object>} - Objet des états actifs des tags.
  */
 async function getTagsActive() {
     const tagsActive = {};
-    for (let [key, data] of Object.entries(tagsData)) {
+    for (const [key, data] of Object.entries(tagsData)) {
         tagsActive[data.tag] = data.active;
     }
     return tagsActive;

@@ -16,85 +16,70 @@ async function logAccounts() {
 }
 
 import { initTags, applyTagToMail } from '../modules/tags.js';
-import { checkForNewMails } from '../modules/rechercheMails.js';
+import { getMailContent } from '../modules/rechercheMails.js';
 import { compareMails } from '../modules/comparaisonMail.js';
 import { extractLinks, compareLinks } from '../modules/liens.js';
 import { initFolders, moveMessages } from '../modules/dossier.js';
 
 /**
- * Supprime les tags existants des messages.
- * @param {Array<Object>} result - La liste des messages.
+ * Supprime les tags existants d'un message.
+ * @param {number} messageId - L'ID du message.
  */
-async function removeExistingTags(result) {
-    for (const message of result) {
-        await browser.messages.update(message.id, { tags: [] });
-    }
+async function removeTagsFromMessage(messageId) {
+    await browser.messages.update(messageId, { tags: [] });
 }
 
 /**
- * Affiche les listes de mails et applique les tags et actions nécessaires.
+ * Traite un message entrant.
+ * @param {Object} message - Le message à traiter.
+ * @param {string} accountId - L’ID du compte associé.
  */
-async function displayMailLists() {
-    const accountIds = await logAccounts();
-    if (!accountIds) return;
-    let tagCheck = false;
-    await initFolders();
+async function processNewMail(message, accountId) {
+    await removeTagsFromMessage(message.id);
 
-    // Fonction de vérification périodique des nouveaux mails
-    const periodicCheck = async () => {
-        for (const accountId of accountIds) {
-            const result = await checkForNewMails(accountId);
-            if (!tagCheck) {
-                await removeExistingTags(result.newEmails);
-                tagCheck = true;
-            }
-            for (const email of result.newEmails) {
-                const mailStatus = await compareMails(email);
+    const content = await getMailContent(message.id);
+    const mailStatus = await compareMails(content);
+    console.log(content);
 
-                // Vérification des contacts
+    const links = extractLinks(content.content);
+    let linkStatus = 2;
+    if (links.length !== 0) {
+        linkStatus = await compareLinks(links);
+        await applyTagToMail(message.id, linkStatus, "lien");
+    }
 
-                //Extraction des liens et comparaison
-                const links = extractLinks(email.content);
-                let linkStatus = 2;
-                if (links.length !== 0) {
-                    linkStatus = await compareLinks(links);
-                    await applyTagToMail(email.id, linkStatus, "lien");
-                }
+    console.log(content.attachments);
+    if (content.attachments === 1) {
+        console.log("fichier")
+        await applyTagToMail(message.id, 1, "fichier");
+    } else if (content.attachments === -1) {
+        await applyTagToMail(message.id, -1, "fichier");
+    }
 
-                // Vérification des pièces jointes
-                if (email.attachments === 1) {
-                    await applyTagToMail(email.id, 1, "fichier");
-                } else if (email.attachments === -1) {
-                    await applyTagToMail(email.id, -1, "fichier");
-                }
+    await applyTagToMail(message.id, mailStatus, "mail");
 
-                // Vérification des contacts
-                await applyTagToMail(email.id, mailStatus, "mail");
-                
-                // Vérification des mails malveillants et déplacement
-                let type;
-                let statusResult = [mailStatus, linkStatus, email.attachments];
-                if (statusResult.includes(-1)) {
-                    if (mailStatus === -1) {
-                        type = "mail";
-                    }
-                    if (linkStatus === -1) {
-                        type = "lien";
-                    }
-                    if (email.attachments === -1) {
-                        type = "fichier";
-                    }
-                    await moveMessages([email.id], accountId + "://INBOX/Malicious", type);
-                }
-            }
-        }
-    };
-
-    setInterval(periodicCheck, 6000);
+    const statusResult = [mailStatus, linkStatus, content.attachments];
+    console.log(statusResult);
+    if (statusResult.includes(-1)) {
+        let type;
+        if (mailStatus === -1) type = "mail";
+        else if (linkStatus === -1) type = "lien";
+        else if (content.attachments === -1) type = "fichier";
+        await moveMessages([message.id], accountId + "://INBOX/Malicious", type);
+    }
 }
 
-initTags().then(() => {
-    displayMailLists();
+
+initTags()
+initFolders()
+
+browser.messages.onNewMailReceived.addListener(async (folder, messages) => {
+    const accountId = folder.accountId;
+    console.log("vazy marche");
+
+    for (const message in messages.messages) {
+        await processNewMail(messages.messages[message], accountId);
+    }
 });
 
 export { logAccounts };
