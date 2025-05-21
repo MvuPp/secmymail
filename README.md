@@ -5,6 +5,7 @@ Le projet SecMyMail vise à développer un greffon pour le logiciel de messageri
 ## Auteurs
 
 - [**MvuPp**]
-- [**Schell Yanis**]
+- [**Creplet Yanis**]
 - [**Gauffeny Paul**]
 - [**Desbrousses Victor**]
+- [**Tucat Mathieu**]
