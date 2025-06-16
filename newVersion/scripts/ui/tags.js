@@ -165,20 +165,34 @@ class TagsUI {
   /**
    * Met à jour la visibilité des options
    */
-  updateOptionsVisibility() {
-    const enabled = document.getElementById('enable-quarantine')?.checked || false;
+updateOptionsVisibility() {
+  const enabled = document.getElementById('enable-quarantine')?.checked || false;
+  
+  const folderSection = document.getElementById('folder-selection');
+  const threatsSection = document.getElementById('threats-selection');
+  
+  if (folderSection) {
+    folderSection.classList.toggle('disabled', !enabled);
     
-    const folderSection = document.getElementById('folder-selection');
-    const threatsSection = document.getElementById('threats-selection');
-    
-    if (folderSection) {
-      folderSection.classList.toggle('disabled', !enabled);
-    }
-    
-    if (threatsSection) {
-      threatsSection.classList.toggle('disabled', !enabled);
+    // Désactiver ou activer les contrôles dans cette section
+    const folderSelect = folderSection.querySelector('select');
+    if (folderSelect) {
+      folderSelect.disabled = !enabled;
     }
   }
+  
+  if (threatsSection) {
+    threatsSection.classList.toggle('disabled', !enabled);
+    
+    // Désactiver ou activer les contrôles dans cette section
+    const checkboxes = threatsSection.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.disabled = !enabled;
+    });
+  }
+  
+  console.log(`[TagsUI] Visibilité des options mise à jour (enabled=${enabled})`);
+}
 
   setupEventListeners() {
     // Navigation
@@ -261,27 +275,33 @@ class TagsUI {
   /**
    * Sauvegarde les options de quarantaine
    */
-  async saveQuarantineOptions() {
-    try {
-      console.log('[TagsUI] 💾 Sauvegarde options quarantaine');
-      
-      const response = await browser.runtime.sendMessage({
-        action: 'updateQuarantineOptions',
-        data: this.quarantineOptions
-      });
-      
-      if (response && response.success) {
-        console.log('[TagsUI] ✅ Options quarantaine sauvegardées');
-        this.showMessage('Options de déplacement sauvegardées', 'success');
-      } else {
-        throw new Error(response?.error || 'Erreur sauvegarde options');
-      }
-      
-    } catch (error) {
-      console.error('[TagsUI] ❌ Erreur sauvegarde options quarantaine:', error);
-      this.showMessage('Erreur sauvegarde des options', 'error');
+async saveQuarantineOptions() {
+  try {
+    console.log('[TagsUI] 💾 Sauvegarde options quarantaine');
+    
+    // Vérifier que les données sont valides avant envoi
+    if (this.quarantineOptions.enabled && !this.quarantineOptions.folder) {
+      this.quarantineOptions.folder = 'INBOX/SecMyMail-Quarantine';
+      document.getElementById('quarantine-folder').value = this.quarantineOptions.folder;
     }
+    
+    const response = await browser.runtime.sendMessage({
+      action: 'updateQuarantineOptions',
+      options: this.quarantineOptions // Corriger la clé en "options" au lieu de "data"
+    });
+    
+    if (response && response.success) {
+      console.log('[TagsUI] ✅ Options quarantaine sauvegardées');
+      this.showMessage('Options de déplacement sauvegardées', 'success');
+    } else {
+      throw new Error(response?.error || 'Erreur sauvegarde options');
+    }
+    
+  } catch (error) {
+    console.error('[TagsUI] ❌ Erreur sauvegarde options quarantaine:', error);
+    this.showMessage('Erreur sauvegarde des options', 'error');
   }
+}
 
   // ... (conserver toutes les autres méthodes pour les tags comme loadTagStatesFromBackground, getMinimalDefaultStates, renderTags, etc.) ...
 

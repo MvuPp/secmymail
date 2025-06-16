@@ -9,7 +9,9 @@ const STORAGE_KEYS = {
   DOMAIN_WHITELIST: 'domainWhitelist',
   DOMAIN_BLACKLIST: 'domainBlacklist',
   FOLDER_SETTINGS: 'folderSettings',
-  APP_SETTINGS: 'appSettings'
+  APP_SETTINGS: 'appSettings',
+  AUTO_MOVE_OPTIONS: 'autoMoveOptions',
+  AUTO_MOVE_STATS: 'autoMoveStats'
 };
 
 class StorageManager {

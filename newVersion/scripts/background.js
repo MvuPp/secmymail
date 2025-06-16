@@ -5,6 +5,7 @@
 
 import { messageAnalyzer } from '../modules/analysis/message.js';
 import { tagManager } from '../modules/core/tags.js';
+import { autoMoveManager } from '../modules/core/autoMove.js';
 
 /**
  * Gestionnaire de tâches asynchrones simulant le multithreading
@@ -310,6 +311,14 @@ class BackgroundService {
       await this.initializeModules();
       await this.setupMailListener();
       
+      // Initialisation du gestionnaire de déplacement automatique
+      try {
+        await autoMoveManager.initialize();
+        console.log('[SecMyMail] ✅ AutoMoveManager initialisé');
+      } catch (error) {
+        console.error('[SecMyMail] ❌ Erreur initialisation AutoMoveManager:', error);
+      }
+      
       this.initialized = true;
       console.log('[SecMyMail] ✅ Service initialisé - TaskManager actif');
       return true;
@@ -453,9 +462,36 @@ class BackgroundService {
       }
       
       await this.applyTagsToMessage(messageId, analysis);
+      await this.processMessageAutoMove(messageId, analysis);
       
     } catch (error) {
       console.error(`[Mail Thread] Erreur traitement message:`, error);
+    }
+  }
+
+  /**
+   * Fonction pour traiter le déplacement automatique après analyse
+   */
+  async processMessageAutoMove(messageId, analysis) {
+    if (!analysis || !messageId) return;
+    
+    try {
+      console.log(`[Mail Thread] 🔒 Vérification déplacement automatique: ${messageId}`);
+      
+      // Vérifier s'il y a des menaces détectées
+      if (analysis.expediteur === -1) {
+        await autoMoveManager.moveMessageIfNeeded(messageId, 'expediteur_malveillant');
+      }
+      
+      if (analysis.liens === -1) {
+        await autoMoveManager.moveMessageIfNeeded(messageId, 'lien_malveillant');
+      }
+      
+      if (analysis.fichiers === -1) {
+        await autoMoveManager.moveMessageIfNeeded(messageId, 'fichier_malveillant');
+      }
+    } catch (error) {
+      console.error(`[Mail Thread] Erreur déplacement automatique:`, error);
     }
   }
 
@@ -576,8 +612,7 @@ class BackgroundService {
     });
   }
 
-  
-   async handleAdminAction(data) {
+  async handleAdminAction(data) {
     const { action } = data;
     
     console.log(`[Admin Thread] 🔧 Exécution: ${action}`);
@@ -610,21 +645,18 @@ class BackgroundService {
       case 'getLists':
         return await this.getAllLists();
 
-      // NOUVELLES ACTIONS QUARANTAINE
+      // ACTIONS DÉPLACEMENT AUTOMATIQUE
       case 'getQuarantineOptions':
-        return await this.getQuarantineOptions();
+        return { success: true, data: autoMoveManager.getOptions() };
       
       case 'updateQuarantineOptions':
-        return await this.updateQuarantineOptions(data.data);
+        return await autoMoveManager.updateOptions(data.options);
+      
+      case 'resetQuarantineOptions':
+        return await autoMoveManager.reset();
       
       case 'getAvailableFolders':
         return await this.getAvailableFolders();
-      
-      case 'getQuarantineStats':
-        return await this.getQuarantineStats();
-      
-      case 'moveToQuarantine':
-        return await this.moveToQuarantine(data.messageId, data.reason);
       
       case 'ping':
         return { status: 'active', timestamp: Date.now() };
@@ -636,55 +668,8 @@ class BackgroundService {
   }
 
   /**
-   * Récupère les options de quarantaine
-   */
-  async getQuarantineOptions() {
-    try {
-      const result = await browser.storage.local.get(['quarantineOptions']);
-      
-      if (result.quarantineOptions) {
-        return { success: true, data: result.quarantineOptions };
-      } else {
-        // Options par défaut
-        const defaultOptions = {
-          enabled: false,
-          folder: 'INBOX/SecMyMail-Quarantine',
-          quarantineExpediteursmalveillants: true,
-          quarantineLiensMalveillants: true,
-          quarantineFichiersMalveillants: true,
-          notificationsEnabled: false,
-          notifyMalveillant: true,
-          notifyQuarantine: false
-        };
-        return { success: true, data: defaultOptions };
-      }
-    } catch (error) {
-      console.error('[Admin Thread] Erreur récupération options quarantaine:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * Met à jour les options de quarantaine
-   */
-  async updateQuarantineOptions(newOptions) {
-    try {
-      console.log('[Admin Thread] 🔒 Mise à jour options quarantaine');
-      
-      await browser.storage.local.set({ quarantineOptions: newOptions });
-      
-      console.log('[Admin Thread] ✅ Options quarantaine mises à jour');
-      return { success: true, data: newOptions };
-      
-    } catch (error) {
-      console.error('[Admin Thread] Erreur mise à jour options quarantaine:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
    * Récupère les dossiers disponibles
-   */
+   */  
   async getAvailableFolders() {
     try {
       console.log('[Admin Thread] 📁 Récupération dossiers disponibles');
@@ -699,26 +684,18 @@ class BackgroundService {
       
       for (const account of accounts) {
         try {
-          const folders = await browser.folders.getSubFolders(account.rootFolder);
+          // Utiliser query au lieu de getSubFolders
+          const folders = await browser.folders.query({ accountId: account.id });
           
-          const processFolder = (folder, basePath = '') => {
-            const fullPath = basePath ? `${basePath}/${folder.name}` : folder.name;
-            
+          // Ajouter chaque dossier à la liste
+          folders.forEach(folder => {
             allFolders.push({
-              path: folder.path || fullPath,
-              name: fullPath,
+              path: folder.path || folder.name,
+              name: folder.name,
               type: folder.type,
               accountId: account.id
             });
-            
-            if (folder.subFolders) {
-              folder.subFolders.forEach(subFolder => {
-                processFolder(subFolder, fullPath);
-              });
-            }
-          };
-          
-          folders.forEach(folder => processFolder(folder));
+          });
           
         } catch (accountError) {
           console.warn(`[Admin Thread] Erreur dossiers compte ${account.name}:`, accountError);
@@ -731,326 +708,6 @@ class BackgroundService {
     } catch (error) {
       console.error('[Admin Thread] Erreur récupération dossiers:', error);
       return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * Récupère les statistiques de quarantaine
-   */
-  async getQuarantineStats() {
-    try {
-      const result = await browser.storage.local.get(['quarantineStats']);
-      
-      const stats = result.quarantineStats || {
-        totalQuarantined: 0,
-        expediteurMalveillant: 0,
-        liensMalveillants: 0,
-        fichiersMalveillants: 0,
-        lastUpdated: Date.now()
-      };
-      
-      return { success: true, data: stats };
-      
-    } catch (error) {
-      console.error('[Admin Thread] Erreur récupération stats quarantaine:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * Déplace un message vers la quarantaine
-   */
-  async moveToQuarantine(messageId, reason = 'Contenu malveillant détecté') {
-    try {
-      console.log(`[Admin Thread] 🔒 Mise en quarantaine message ${messageId}: ${reason}`);
-      
-      // Récupérer les options de quarantaine
-      const optionsResponse = await this.getQuarantineOptions();
-      if (!optionsResponse.success || !optionsResponse.data.enabled) {
-        console.log('[Admin Thread] Quarantaine désactivée, message non déplacé');
-        return { success: false, error: 'Quarantaine désactivée' };
-      }
-      
-      const options = optionsResponse.data;
-      
-      // Récupérer le message pour obtenir des infos
-      let messageInfo;
-      try {
-        messageInfo = await browser.messages.get(messageId);
-      } catch (error) {
-        console.error('[Admin Thread] Impossible de récupérer info message:', error);
-        return { success: false, error: 'Message non trouvé' };
-      }
-      
-      // Vérifier si le dossier de quarantaine existe, sinon le créer
-      const targetFolder = await this.ensureQuarantineFolder(options.folder);
-      if (!targetFolder) {
-        return { success: false, error: 'Impossible de créer le dossier de quarantaine' };
-      }
-      
-      // Déplacer le message
-      try {
-        await browser.messages.move([messageId], targetFolder);
-        console.log(`[Admin Thread] ✅ Message ${messageId} déplacé vers la quarantaine`);
-        
-        // Mettre à jour les statistiques
-        await this.updateQuarantineStats(reason);
-        
-        // Envoyer notification si activée
-        if (options.notificationsEnabled && options.notifyQuarantine) {
-          await this.sendQuarantineNotification(messageInfo, reason);
-        }
-        
-        return { 
-          success: true, 
-          messageId: messageId,
-          reason: reason,
-          folder: options.folder,
-          subject: messageInfo.subject,
-          author: messageInfo.author
-        };
-        
-      } catch (moveError) {
-        console.error('[Admin Thread] Erreur déplacement message:', moveError);
-        return { success: false, error: `Erreur déplacement: ${moveError.message}` };
-      }
-      
-    } catch (error) {
-      console.error('[Admin Thread] Erreur mise en quarantaine:', error);
-      return { success: false, error: error.message };
-    }
-  }
-
-  /**
-   * S'assure que le dossier de quarantaine existe
-   */
-  async ensureQuarantineFolder(folderPath) {
-    try {
-      // Tenter de trouver le dossier existant
-      const accounts = await browser.accounts.list();
-      
-      for (const account of accounts) {
-        try {
-          const folders = await browser.folders.getSubFolders(account.rootFolder, true);
-          const targetFolder = folders.find(folder => 
-            folder.path === folderPath || folder.name === folderPath
-          );
-          
-          if (targetFolder) {
-            console.log(`[Admin Thread] 📁 Dossier quarantaine trouvé: ${folderPath}`);
-            return targetFolder;
-          }
-        } catch (error) {
-          // Continuer avec le compte suivant
-        }
-      }
-      
-      // Si le dossier n'existe pas, essayer de le créer
-      try {
-        const firstAccount = accounts[0];
-        if (firstAccount && browser.folders.create) {
-          const newFolder = await browser.folders.create(firstAccount.rootFolder, folderPath);
-          console.log(`[Admin Thread] ✅ Dossier quarantaine créé: ${folderPath}`);
-          return newFolder;
-        }
-      } catch (createError) {
-        console.error('[Admin Thread] Impossible de créer le dossier quarantaine:', createError);
-      }
-      
-      // Fallback: utiliser la boîte de réception
-      console.warn('[Admin Thread] Utilisation de INBOX comme fallback');
-      return accounts[0]?.rootFolder;
-      
-    } catch (error) {
-      console.error('[Admin Thread] Erreur dossier quarantaine:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Met à jour les statistiques de quarantaine
-   */
-  async updateQuarantineStats(reason) {
-    try {
-      const currentStats = await this.getQuarantineStats();
-      const stats = currentStats.success ? currentStats.data : {
-        totalQuarantined: 0,
-        expediteurMalveillant: 0,
-        liensMalveillants: 0,
-        fichiersMalveillants: 0
-      };
-      
-      stats.totalQuarantined++;
-      stats.lastUpdated = Date.now();
-      
-      // Incrémenter selon le type de menace
-      if (reason.includes('Expéditeur')) {
-        stats.expediteurMalveillant++;
-      } else if (reason.includes('Lien')) {
-        stats.liensMalveillants++;
-      } else if (reason.includes('Fichier')) {
-        stats.fichiersMalveillants++;
-      }
-      
-      await browser.storage.local.set({ quarantineStats: stats });
-      console.log('[Admin Thread] 📊 Statistiques quarantaine mises à jour');
-      
-    } catch (error) {
-      console.error('[Admin Thread] Erreur mise à jour stats:', error);
-    }
-  }
-
-  /**
-   * Envoie une notification de quarantaine
-   */
-  async sendQuarantineNotification(messageInfo, reason) {
-    try {
-      if (browser.notifications) {
-        await browser.notifications.create({
-          type: 'basic',
-          iconUrl: '../icons/icon-48.png',
-          title: 'SecMyMail - Email en quarantaine',
-          message: `Email de ${messageInfo.author} mis en quarantaine\nRaison: ${reason}`
-        });
-      }
-    } catch (error) {
-      console.error('[Admin Thread] Erreur notification:', error);
-    }
-  }
-
-  // Modifier la méthode applyTagsToMessage pour inclure la quarantaine
-  async applyTagsToMessage(messageId, analysis) {
-    try {
-      const tagsToApply = [];
-      const quarantineReasons = [];
-      let totalTagsChecked = 0;
-      let enabledTagsFound = 0;
-      
-      // Récupérer les options de quarantaine
-      const quarantineOptionsResponse = await this.getQuarantineOptions();
-      const quarantineOptions = quarantineOptionsResponse.success ? 
-        quarantineOptionsResponse.data : { enabled: false };
-      
-      // Tag expéditeur
-      const expediteurStatus = analysis.expediteur ?? 0;
-      const expediteurTagKey = this.getTagKey('expediteur', expediteurStatus);
-      
-      if (expediteurTagKey) {
-        totalTagsChecked++;
-        const isEnabled = await this.isTagEnabled(expediteurTagKey);
-        
-        if (isEnabled) {
-          enabledTagsFound++;
-          tagsToApply.push({
-            key: expediteurTagKey,
-            reason: `Expéditeur (${expediteurStatus})`,
-            category: 'expediteur'
-          });
-          
-          // Vérifier quarantaine pour expéditeur malveillant
-          if (expediteurStatus === -1 && quarantineOptions.enabled && 
-              quarantineOptions.quarantineExpediteursmalveillants) {
-            quarantineReasons.push('Expéditeur malveillant détecté');
-          }
-        }
-      }
-      
-      // Tag liens
-      const liensStatus = analysis.liens ?? 0;
-      const liensCount = analysis.details?.linkDetails?.count ?? 0;
-      
-      if (liensCount > 0) {
-        const liensTagKey = this.getTagKey('liens', liensStatus);
-        if (liensTagKey) {
-          totalTagsChecked++;
-          const isEnabled = await this.isTagEnabled(liensTagKey);
-          
-          if (isEnabled) {
-            enabledTagsFound++;
-            tagsToApply.push({
-              key: liensTagKey,
-              reason: `Liens (${liensStatus}, count: ${liensCount})`,
-              category: 'liens'
-            });
-            
-            // Vérifier quarantaine pour liens malveillants
-            if (liensStatus === -1 && quarantineOptions.enabled && 
-                quarantineOptions.quarantineLiensMalveillants) {
-              quarantineReasons.push('Liens malveillants détectés');
-            }
-          }
-        }
-      }
-      
-      // Tag fichiers
-      const fichiersStatus = analysis.fichiers ?? 0;
-      const fichiersCount = analysis.details?.attachmentDetails?.count ?? 0;
-      
-      if (fichiersCount > 0) {
-        const fichiersTagKey = this.getTagKey('fichiers', fichiersStatus);
-        if (fichiersTagKey) {
-          totalTagsChecked++;
-          const isEnabled = await this.isTagEnabled(fichiersTagKey);
-          
-          if (isEnabled) {
-            enabledTagsFound++;
-            tagsToApply.push({
-              key: fichiersTagKey,
-              reason: `Fichiers (${fichiersStatus}, count: ${fichiersCount})`,
-              category: 'fichiers'
-            });
-            
-            // Vérifier quarantaine pour fichiers malveillants
-            if (fichiersStatus === -1 && quarantineOptions.enabled && 
-                quarantineOptions.quarantineFichiersMalveillants) {
-              quarantineReasons.push('Fichiers malveillants détectés');
-            }
-          }
-        }
-      }
-      
-      console.log(`[Mail Thread] 📊 Vérification tags: ${enabledTagsFound}/${totalTagsChecked} activés`);
-      
-      // Application des tags activés uniquement
-      let successCount = 0;
-      for (const tagInfo of tagsToApply) {
-        try {
-          const success = await this.tagManager.applyTag(messageId, tagInfo.key);
-          if (success) {
-            successCount++;
-            console.log(`[Mail Thread] ✅ Tag appliqué: ${tagInfo.key} (${tagInfo.category})`);
-          } else {
-            console.warn(`[Mail Thread] ⚠️ Échec application tag: ${tagInfo.key}`);
-          }
-        } catch (tagError) {
-          console.error(`[Mail Thread] Erreur tag ${tagInfo.key}:`, tagError);
-        }
-      }
-      
-      // Mise en quarantaine si nécessaire
-      if (quarantineReasons.length > 0) {
-        console.log(`[Mail Thread] 🔒 Mise en quarantaine nécessaire: ${quarantineReasons.join(', ')}`);
-        
-        try {
-          const quarantineResult = await this.moveToQuarantine(messageId, quarantineReasons.join(', '));
-          if (quarantineResult.success) {
-            console.log(`[Mail Thread] ✅ Message mis en quarantaine: ${messageId}`);
-          } else {
-            console.warn(`[Mail Thread] ⚠️ Échec quarantaine: ${quarantineResult.error}`);
-          }
-        } catch (quarantineError) {
-          console.error(`[Mail Thread] Erreur quarantaine:`, quarantineError);
-        }
-      }
-      
-      if (tagsToApply.length === 0) {
-        console.log(`[Mail Thread] 🏷️ Aucun tag à appliquer (tous désactivés ou non applicables)`);
-      } else {
-        console.log(`[Mail Thread] 📊 Tags appliqués: ${successCount}/${tagsToApply.length} réussis`);
-      }
-      
-    } catch (error) {
-      console.error('[Mail Thread] Erreur application tags:', error);
     }
   }
 
@@ -1070,7 +727,7 @@ class BackgroundService {
       // Invalider le cache
       this.invalidateTagStatesCache();
       
-      // NOUVEAU: Synchroniser les tags avec Thunderbird
+      // Synchroniser les tags avec Thunderbird
       await this.syncTagsWithThunderbird(newTagStates);
       
       console.log('[Admin Thread] ✅ États des tags mis à jour et synchronisés');
@@ -1082,7 +739,7 @@ class BackgroundService {
     }
   }
 
-    /**
+  /**
    * Synchronise les tags avec Thunderbird (couleurs et états)
    */
   async syncTagsWithThunderbird(tagStates) {
@@ -1111,7 +768,6 @@ class BackgroundService {
           if (existingTag) {
             // Mettre à jour le tag existant si la couleur a changé
             if (existingTag.color !== tagState.color) {
-              // CORRECTION: Utiliser seulement 'color', pas 'label'
               await browser.messages.tags.update(tagKey, {
                 color: tagState.color
               });
@@ -1223,7 +879,6 @@ class BackgroundService {
     return labels[tagKey] || `SecMyMail: ${tagKey}`;
   }
   
-
   /**
    * Récupère les états des tags pour l'UI
    */
@@ -1443,4 +1098,4 @@ setInterval(() => {
 // Export
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { backgroundService };
-}
+} 
