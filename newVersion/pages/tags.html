@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecMyMail - Gestion des tags</title>
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/tags.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-nav">
+                <button id="back-btn" class="nav-btn" title="Retour">
+                    <span class="nav-icon">←</span>
+                </button>
+                <button id="home-btn" class="nav-btn" title="Accueil">
+                    <span class="nav-icon">🏠</span>
+                </button>
+            </div>
+            <div class="header-title">
+                <h1>🏷️ Gestion des Tags</h1>
+                <p>Configuration du marquage automatique des emails</p>
+            </div>
+            <div class="header-actions">
+                <button id="save-settings" class="btn btn-primary">
+                    <span class="btn-icon">💾</span>
+                    Sauvegarder
+                </button>
+                <button id="reset-settings" class="btn btn-secondary">
+                    <span class="btn-icon">🔄</span>
+                    Réinitialiser
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Section Tags d'Expéditeur -->
+            <section class="tag-section">
+                <div class="section-header">
+                    <h2>📧 Tags d'Expéditeur</h2>
+                    <p>Marquage automatique basé sur l'analyse de l'expéditeur</p>
+                </div>
+                <div class="tag-grid" id="email-tags">
+                    <!-- Les tags seront générés par JavaScript -->
+                </div>
+            </section>
+
+            <!-- Section Tags de Liens -->
+            <section class="tag-section">
+                <div class="section-header">
+                    <h2>🔗 Tags de Liens</h2>
+                    <p>Marquage automatique basé sur l'analyse des liens</p>
+                </div>
+                <div class="tag-grid" id="link-tags">
+                    <!-- Les tags seront générés par JavaScript -->
+                </div>
+            </section>
+
+            <!-- Section Tags de Fichiers -->
+            <section class="tag-section">
+                <div class="section-header">
+                    <h2>📎 Tags de Fichiers</h2>
+                    <p>Marquage automatique basé sur l'analyse des pièces jointes</p>
+                </div>
+                <div class="tag-grid" id="file-tags">
+                    <!-- Les tags seront générés par JavaScript -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="../scripts/ui/tags.js"></script>
+</body>
+</html>
