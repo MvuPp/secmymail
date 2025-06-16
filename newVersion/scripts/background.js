@@ -159,11 +159,133 @@ class BackgroundService {
       }
     };
     
+    // Cache des états des tags pour éviter les lectures répétées
+    this.tagStatesCache = null;
+    this.tagStatesCacheExpiry = 0;
+    this.CACHE_DURATION = 30000; // 30 secondes
+    
     console.log('[SecMyMail] BackgroundService créé avec TaskManager');
   }
 
   getTagKey(type, status) {
     return this.TAG_MAPPING[type]?.[status.toString()];
+  }
+
+  /**
+   * Récupère les états des tags depuis le cache ou le storage
+   */
+  async getTagStates() {
+    const now = Date.now();
+    
+    // Utiliser le cache si valide
+    if (this.tagStatesCache && now < this.tagStatesCacheExpiry) {
+      return this.tagStatesCache;
+    }
+    
+    try {
+      const result = await browser.storage.local.get(['tagStates']);
+      
+      if (result.tagStates) {
+        this.tagStatesCache = result.tagStates;
+        this.tagStatesCacheExpiry = now + this.CACHE_DURATION;
+        console.log('[SecMyMail] 📊 États des tags mis en cache');
+        return this.tagStatesCache;
+      } else {
+        // Retourner les états par défaut si rien en storage
+        const defaultStates = this.getDefaultTagStates();
+        this.tagStatesCache = defaultStates;
+        this.tagStatesCacheExpiry = now + this.CACHE_DURATION;
+        return defaultStates;
+      }
+    } catch (error) {
+      console.error('[SecMyMail] Erreur récupération états des tags:', error);
+      return this.getDefaultTagStates();
+    }
+  }
+
+  /**
+   * États par défaut des tags
+   */
+  getDefaultTagStates() {
+    return {
+      "secmymail.expediteur_malveillant": {
+        color: "#FF0000",
+        tag: "Expéditeur Malveillant",
+        default_color: "#FF0000"
+      },
+      "secmymail.expediteur_suspect": {
+        color: "#FF8C00",
+        tag: "Expéditeur Suspect",
+        default_color: "#FF8C00"
+      },
+      "secmymail.expediteur_sur": {
+        color: "#32CD32",
+        tag: "Expéditeur Sûr",
+        default_color: "#32CD32"
+      },
+      "secmymail.lien_malveillant": {
+        color: "#FF0000",
+        tag: "Lien Malveillant",
+        default_color: "#FF0000"
+      },
+      "secmymail.lien_suspect": {
+        color: "#FF8C00",
+        tag: "Lien Suspect",
+        default_color: "#FF8C00"
+      },
+      "secmymail.lien_sur": {
+        color: "#32CD32",
+        tag: "Lien Sûr",
+        default_color: "#32CD32"
+      },
+      "secmymail.fichier_malveillant": {
+        color: "#FF0000",
+        tag: "Fichier Malveillant",
+        default_color: "#FF0000"
+      },
+      "secmymail.fichier_suspect": {
+        color: "#FF8C00",
+        tag: "Fichier Suspect",
+        default_color: "#FF8C00"
+      },
+      "secmymail.fichier_sur": {
+        color: "#32CD32",
+        tag: "Fichier Sûr",
+        default_color: "#32CD32"
+      }
+    };
+  }
+
+  /**
+   * Vérifie si un tag est activé
+   */
+  async isTagEnabled(tagKey) {
+    try {
+      const tagStates = await this.getTagStates();
+      const tagState = tagStates[tagKey];
+      
+      if (!tagState) {
+        console.warn(`[SecMyMail] Tag inconnu: ${tagKey}`);
+        return false;
+      }
+      
+      const isEnabled = tagState.active !== false; // Par défaut true si non défini
+      console.log(`[SecMyMail] 🏷️ Tag ${tagKey}: ${isEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
+      
+      return isEnabled;
+    } catch (error) {
+      console.error(`[SecMyMail] Erreur vérification tag ${tagKey}:`, error);
+      return false; // En cas d'erreur, ne pas appliquer le tag
+    }
+  }
+
+  /**
+   * Invalide le cache des états des tags
+   */
+  invalidateTagStatesCache() {
+    this.tagStatesCache = null;
+    this.tagStatesCacheExpiry = 0;
+    console.log('[SecMyMail] 🔄 Cache des états des tags invalidé');
   }
 
   async initialize() {
@@ -205,6 +327,9 @@ class BackgroundService {
       if (!this.tagManager.initialized) {
         await this.tagManager.initialize();
       }
+      
+      // Pré-charger les états des tags
+      await this.getTagStates();
       
       console.log('[SecMyMail] ✓ Modules initialisés');
     } catch (error) {
@@ -337,16 +462,27 @@ class BackgroundService {
   async applyTagsToMessage(messageId, analysis) {
     try {
       const tagsToApply = [];
+      let totalTagsChecked = 0;
+      let enabledTagsFound = 0;
       
       // Tag expéditeur
       const expediteurStatus = analysis.expediteur ?? 0;
       const expediteurTagKey = this.getTagKey('expediteur', expediteurStatus);
       
-      if (expediteurTagKey && this.tagManager.isTagEnabled(expediteurTagKey)) {
-        tagsToApply.push({
-          key: expediteurTagKey,
-          reason: `Expéditeur (${expediteurStatus})`
-        });
+      if (expediteurTagKey) {
+        totalTagsChecked++;
+        const isEnabled = await this.isTagEnabled(expediteurTagKey);
+        
+        if (isEnabled) {
+          enabledTagsFound++;
+          tagsToApply.push({
+            key: expediteurTagKey,
+            reason: `Expéditeur (${expediteurStatus})`,
+            category: 'expediteur'
+          });
+        } else {
+          console.log(`[Mail Thread] 🚫 Tag expéditeur désactivé: ${expediteurTagKey}`);
+        }
       }
       
       // Tag liens
@@ -355,11 +491,20 @@ class BackgroundService {
       
       if (liensCount > 0) {
         const liensTagKey = this.getTagKey('liens', liensStatus);
-        if (liensTagKey && this.tagManager.isTagEnabled(liensTagKey)) {
-          tagsToApply.push({
-            key: liensTagKey,
-            reason: `Liens (${liensStatus}, count: ${liensCount})`
-          });
+        if (liensTagKey) {
+          totalTagsChecked++;
+          const isEnabled = await this.isTagEnabled(liensTagKey);
+          
+          if (isEnabled) {
+            enabledTagsFound++;
+            tagsToApply.push({
+              key: liensTagKey,
+              reason: `Liens (${liensStatus}, count: ${liensCount})`,
+              category: 'liens'
+            });
+          } else {
+            console.log(`[Mail Thread] 🚫 Tag liens désactivé: ${liensTagKey}`);
+          }
         }
       }
       
@@ -369,26 +514,46 @@ class BackgroundService {
       
       if (fichiersCount > 0) {
         const fichiersTagKey = this.getTagKey('fichiers', fichiersStatus);
-        if (fichiersTagKey && this.tagManager.isTagEnabled(fichiersTagKey)) {
-          tagsToApply.push({
-            key: fichiersTagKey,
-            reason: `Fichiers (${fichiersStatus}, count: ${fichiersCount})`
-          });
+        if (fichiersTagKey) {
+          totalTagsChecked++;
+          const isEnabled = await this.isTagEnabled(fichiersTagKey);
+          
+          if (isEnabled) {
+            enabledTagsFound++;
+            tagsToApply.push({
+              key: fichiersTagKey,
+              reason: `Fichiers (${fichiersStatus}, count: ${fichiersCount})`,
+              category: 'fichiers'
+            });
+          } else {
+            console.log(`[Mail Thread] 🚫 Tag fichiers désactivé: ${fichiersTagKey}`);
+          }
         }
       }
       
-      // Application des tags
+      console.log(`[Mail Thread] 📊 Vérification tags: ${enabledTagsFound}/${totalTagsChecked} activés`);
+      
+      // Application des tags activés uniquement
       let successCount = 0;
-      for (const { key: tagKey } of tagsToApply) {
+      for (const tagInfo of tagsToApply) {
         try {
-          const success = await this.tagManager.applyTag(messageId, tagKey);
-          if (success) successCount++;
+          const success = await this.tagManager.applyTag(messageId, tagInfo.key);
+          if (success) {
+            successCount++;
+            console.log(`[Mail Thread] ✅ Tag appliqué: ${tagInfo.key} (${tagInfo.category})`);
+          } else {
+            console.warn(`[Mail Thread] ⚠️ Échec application tag: ${tagInfo.key}`);
+          }
         } catch (tagError) {
-          console.error(`[Mail Thread] Erreur tag ${tagKey}:`, tagError);
+          console.error(`[Mail Thread] Erreur tag ${tagInfo.key}:`, tagError);
         }
       }
       
-      console.log(`[Mail Thread] 📊 Tags: ${successCount}/${tagsToApply.length} appliqués`);
+      if (tagsToApply.length === 0) {
+        console.log(`[Mail Thread] 🏷️ Aucun tag à appliquer (tous désactivés ou non applicables)`);
+      } else {
+        console.log(`[Mail Thread] 📊 Tags appliqués: ${successCount}/${tagsToApply.length} réussis`);
+      }
       
     } catch (error) {
       console.error('[Mail Thread] Erreur application tags:', error);
@@ -403,7 +568,7 @@ class BackgroundService {
     return new Promise((resolve, reject) => {
       this.taskManager.addAdminTask({
         type: action,
-        data: { action, ...params }, // CORRECTION: Passer action et params correctement
+        data: { action, ...params },
         handler: this.handleAdminAction.bind(this),
         resolve,
         reject
@@ -411,7 +576,8 @@ class BackgroundService {
     });
   }
 
-  async handleAdminAction(data) {
+  
+   async handleAdminAction(data) {
     const { action } = data;
     
     console.log(`[Admin Thread] 🔧 Exécution: ${action}`);
@@ -432,12 +598,642 @@ class BackgroundService {
       case 'toggleTag':
         return await this.tagManager.toggleTag(data.tagKey);
       
+      case 'updateTagStates':
+        return await this.updateTagStates(data.data);
+      
+      case 'updateTagColor':
+        return await this.updateTagColor(data.tagKey, data.color, data.oldColor);
+      
+      case 'getTagStates':
+        return await this.getTagStatesForUI();
+      
       case 'getLists':
         return await this.getAllLists();
+
+      // NOUVELLES ACTIONS QUARANTAINE
+      case 'getQuarantineOptions':
+        return await this.getQuarantineOptions();
+      
+      case 'updateQuarantineOptions':
+        return await this.updateQuarantineOptions(data.data);
+      
+      case 'getAvailableFolders':
+        return await this.getAvailableFolders();
+      
+      case 'getQuarantineStats':
+        return await this.getQuarantineStats();
+      
+      case 'moveToQuarantine':
+        return await this.moveToQuarantine(data.messageId, data.reason);
+      
+      case 'ping':
+        return { status: 'active', timestamp: Date.now() };
       
       default:
         console.warn(`[Admin Thread] Action inconnue: ${action}`);
         return { success: false, error: 'Action inconnue' };
+    }
+  }
+
+  /**
+   * Récupère les options de quarantaine
+   */
+  async getQuarantineOptions() {
+    try {
+      const result = await browser.storage.local.get(['quarantineOptions']);
+      
+      if (result.quarantineOptions) {
+        return { success: true, data: result.quarantineOptions };
+      } else {
+        // Options par défaut
+        const defaultOptions = {
+          enabled: false,
+          folder: 'INBOX/SecMyMail-Quarantine',
+          quarantineExpediteursmalveillants: true,
+          quarantineLiensMalveillants: true,
+          quarantineFichiersMalveillants: true,
+          notificationsEnabled: false,
+          notifyMalveillant: true,
+          notifyQuarantine: false
+        };
+        return { success: true, data: defaultOptions };
+      }
+    } catch (error) {
+      console.error('[Admin Thread] Erreur récupération options quarantaine:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Met à jour les options de quarantaine
+   */
+  async updateQuarantineOptions(newOptions) {
+    try {
+      console.log('[Admin Thread] 🔒 Mise à jour options quarantaine');
+      
+      await browser.storage.local.set({ quarantineOptions: newOptions });
+      
+      console.log('[Admin Thread] ✅ Options quarantaine mises à jour');
+      return { success: true, data: newOptions };
+      
+    } catch (error) {
+      console.error('[Admin Thread] Erreur mise à jour options quarantaine:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Récupère les dossiers disponibles
+   */
+  async getAvailableFolders() {
+    try {
+      console.log('[Admin Thread] 📁 Récupération dossiers disponibles');
+      
+      if (!browser.folders) {
+        console.warn('[Admin Thread] API folders non disponible');
+        return { success: false, error: 'API folders non disponible' };
+      }
+      
+      const accounts = await browser.accounts.list();
+      const allFolders = [];
+      
+      for (const account of accounts) {
+        try {
+          const folders = await browser.folders.getSubFolders(account.rootFolder);
+          
+          const processFolder = (folder, basePath = '') => {
+            const fullPath = basePath ? `${basePath}/${folder.name}` : folder.name;
+            
+            allFolders.push({
+              path: folder.path || fullPath,
+              name: fullPath,
+              type: folder.type,
+              accountId: account.id
+            });
+            
+            if (folder.subFolders) {
+              folder.subFolders.forEach(subFolder => {
+                processFolder(subFolder, fullPath);
+              });
+            }
+          };
+          
+          folders.forEach(folder => processFolder(folder));
+          
+        } catch (accountError) {
+          console.warn(`[Admin Thread] Erreur dossiers compte ${account.name}:`, accountError);
+        }
+      }
+      
+      console.log(`[Admin Thread] 📁 ${allFolders.length} dossiers trouvés`);
+      return { success: true, folders: allFolders };
+      
+    } catch (error) {
+      console.error('[Admin Thread] Erreur récupération dossiers:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Récupère les statistiques de quarantaine
+   */
+  async getQuarantineStats() {
+    try {
+      const result = await browser.storage.local.get(['quarantineStats']);
+      
+      const stats = result.quarantineStats || {
+        totalQuarantined: 0,
+        expediteurMalveillant: 0,
+        liensMalveillants: 0,
+        fichiersMalveillants: 0,
+        lastUpdated: Date.now()
+      };
+      
+      return { success: true, data: stats };
+      
+    } catch (error) {
+      console.error('[Admin Thread] Erreur récupération stats quarantaine:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Déplace un message vers la quarantaine
+   */
+  async moveToQuarantine(messageId, reason = 'Contenu malveillant détecté') {
+    try {
+      console.log(`[Admin Thread] 🔒 Mise en quarantaine message ${messageId}: ${reason}`);
+      
+      // Récupérer les options de quarantaine
+      const optionsResponse = await this.getQuarantineOptions();
+      if (!optionsResponse.success || !optionsResponse.data.enabled) {
+        console.log('[Admin Thread] Quarantaine désactivée, message non déplacé');
+        return { success: false, error: 'Quarantaine désactivée' };
+      }
+      
+      const options = optionsResponse.data;
+      
+      // Récupérer le message pour obtenir des infos
+      let messageInfo;
+      try {
+        messageInfo = await browser.messages.get(messageId);
+      } catch (error) {
+        console.error('[Admin Thread] Impossible de récupérer info message:', error);
+        return { success: false, error: 'Message non trouvé' };
+      }
+      
+      // Vérifier si le dossier de quarantaine existe, sinon le créer
+      const targetFolder = await this.ensureQuarantineFolder(options.folder);
+      if (!targetFolder) {
+        return { success: false, error: 'Impossible de créer le dossier de quarantaine' };
+      }
+      
+      // Déplacer le message
+      try {
+        await browser.messages.move([messageId], targetFolder);
+        console.log(`[Admin Thread] ✅ Message ${messageId} déplacé vers la quarantaine`);
+        
+        // Mettre à jour les statistiques
+        await this.updateQuarantineStats(reason);
+        
+        // Envoyer notification si activée
+        if (options.notificationsEnabled && options.notifyQuarantine) {
+          await this.sendQuarantineNotification(messageInfo, reason);
+        }
+        
+        return { 
+          success: true, 
+          messageId: messageId,
+          reason: reason,
+          folder: options.folder,
+          subject: messageInfo.subject,
+          author: messageInfo.author
+        };
+        
+      } catch (moveError) {
+        console.error('[Admin Thread] Erreur déplacement message:', moveError);
+        return { success: false, error: `Erreur déplacement: ${moveError.message}` };
+      }
+      
+    } catch (error) {
+      console.error('[Admin Thread] Erreur mise en quarantaine:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * S'assure que le dossier de quarantaine existe
+   */
+  async ensureQuarantineFolder(folderPath) {
+    try {
+      // Tenter de trouver le dossier existant
+      const accounts = await browser.accounts.list();
+      
+      for (const account of accounts) {
+        try {
+          const folders = await browser.folders.getSubFolders(account.rootFolder, true);
+          const targetFolder = folders.find(folder => 
+            folder.path === folderPath || folder.name === folderPath
+          );
+          
+          if (targetFolder) {
+            console.log(`[Admin Thread] 📁 Dossier quarantaine trouvé: ${folderPath}`);
+            return targetFolder;
+          }
+        } catch (error) {
+          // Continuer avec le compte suivant
+        }
+      }
+      
+      // Si le dossier n'existe pas, essayer de le créer
+      try {
+        const firstAccount = accounts[0];
+        if (firstAccount && browser.folders.create) {
+          const newFolder = await browser.folders.create(firstAccount.rootFolder, folderPath);
+          console.log(`[Admin Thread] ✅ Dossier quarantaine créé: ${folderPath}`);
+          return newFolder;
+        }
+      } catch (createError) {
+        console.error('[Admin Thread] Impossible de créer le dossier quarantaine:', createError);
+      }
+      
+      // Fallback: utiliser la boîte de réception
+      console.warn('[Admin Thread] Utilisation de INBOX comme fallback');
+      return accounts[0]?.rootFolder;
+      
+    } catch (error) {
+      console.error('[Admin Thread] Erreur dossier quarantaine:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Met à jour les statistiques de quarantaine
+   */
+  async updateQuarantineStats(reason) {
+    try {
+      const currentStats = await this.getQuarantineStats();
+      const stats = currentStats.success ? currentStats.data : {
+        totalQuarantined: 0,
+        expediteurMalveillant: 0,
+        liensMalveillants: 0,
+        fichiersMalveillants: 0
+      };
+      
+      stats.totalQuarantined++;
+      stats.lastUpdated = Date.now();
+      
+      // Incrémenter selon le type de menace
+      if (reason.includes('Expéditeur')) {
+        stats.expediteurMalveillant++;
+      } else if (reason.includes('Lien')) {
+        stats.liensMalveillants++;
+      } else if (reason.includes('Fichier')) {
+        stats.fichiersMalveillants++;
+      }
+      
+      await browser.storage.local.set({ quarantineStats: stats });
+      console.log('[Admin Thread] 📊 Statistiques quarantaine mises à jour');
+      
+    } catch (error) {
+      console.error('[Admin Thread] Erreur mise à jour stats:', error);
+    }
+  }
+
+  /**
+   * Envoie une notification de quarantaine
+   */
+  async sendQuarantineNotification(messageInfo, reason) {
+    try {
+      if (browser.notifications) {
+        await browser.notifications.create({
+          type: 'basic',
+          iconUrl: '../icons/icon-48.png',
+          title: 'SecMyMail - Email en quarantaine',
+          message: `Email de ${messageInfo.author} mis en quarantaine\nRaison: ${reason}`
+        });
+      }
+    } catch (error) {
+      console.error('[Admin Thread] Erreur notification:', error);
+    }
+  }
+
+  // Modifier la méthode applyTagsToMessage pour inclure la quarantaine
+  async applyTagsToMessage(messageId, analysis) {
+    try {
+      const tagsToApply = [];
+      const quarantineReasons = [];
+      let totalTagsChecked = 0;
+      let enabledTagsFound = 0;
+      
+      // Récupérer les options de quarantaine
+      const quarantineOptionsResponse = await this.getQuarantineOptions();
+      const quarantineOptions = quarantineOptionsResponse.success ? 
+        quarantineOptionsResponse.data : { enabled: false };
+      
+      // Tag expéditeur
+      const expediteurStatus = analysis.expediteur ?? 0;
+      const expediteurTagKey = this.getTagKey('expediteur', expediteurStatus);
+      
+      if (expediteurTagKey) {
+        totalTagsChecked++;
+        const isEnabled = await this.isTagEnabled(expediteurTagKey);
+        
+        if (isEnabled) {
+          enabledTagsFound++;
+          tagsToApply.push({
+            key: expediteurTagKey,
+            reason: `Expéditeur (${expediteurStatus})`,
+            category: 'expediteur'
+          });
+          
+          // Vérifier quarantaine pour expéditeur malveillant
+          if (expediteurStatus === -1 && quarantineOptions.enabled && 
+              quarantineOptions.quarantineExpediteursmalveillants) {
+            quarantineReasons.push('Expéditeur malveillant détecté');
+          }
+        }
+      }
+      
+      // Tag liens
+      const liensStatus = analysis.liens ?? 0;
+      const liensCount = analysis.details?.linkDetails?.count ?? 0;
+      
+      if (liensCount > 0) {
+        const liensTagKey = this.getTagKey('liens', liensStatus);
+        if (liensTagKey) {
+          totalTagsChecked++;
+          const isEnabled = await this.isTagEnabled(liensTagKey);
+          
+          if (isEnabled) {
+            enabledTagsFound++;
+            tagsToApply.push({
+              key: liensTagKey,
+              reason: `Liens (${liensStatus}, count: ${liensCount})`,
+              category: 'liens'
+            });
+            
+            // Vérifier quarantaine pour liens malveillants
+            if (liensStatus === -1 && quarantineOptions.enabled && 
+                quarantineOptions.quarantineLiensMalveillants) {
+              quarantineReasons.push('Liens malveillants détectés');
+            }
+          }
+        }
+      }
+      
+      // Tag fichiers
+      const fichiersStatus = analysis.fichiers ?? 0;
+      const fichiersCount = analysis.details?.attachmentDetails?.count ?? 0;
+      
+      if (fichiersCount > 0) {
+        const fichiersTagKey = this.getTagKey('fichiers', fichiersStatus);
+        if (fichiersTagKey) {
+          totalTagsChecked++;
+          const isEnabled = await this.isTagEnabled(fichiersTagKey);
+          
+          if (isEnabled) {
+            enabledTagsFound++;
+            tagsToApply.push({
+              key: fichiersTagKey,
+              reason: `Fichiers (${fichiersStatus}, count: ${fichiersCount})`,
+              category: 'fichiers'
+            });
+            
+            // Vérifier quarantaine pour fichiers malveillants
+            if (fichiersStatus === -1 && quarantineOptions.enabled && 
+                quarantineOptions.quarantineFichiersMalveillants) {
+              quarantineReasons.push('Fichiers malveillants détectés');
+            }
+          }
+        }
+      }
+      
+      console.log(`[Mail Thread] 📊 Vérification tags: ${enabledTagsFound}/${totalTagsChecked} activés`);
+      
+      // Application des tags activés uniquement
+      let successCount = 0;
+      for (const tagInfo of tagsToApply) {
+        try {
+          const success = await this.tagManager.applyTag(messageId, tagInfo.key);
+          if (success) {
+            successCount++;
+            console.log(`[Mail Thread] ✅ Tag appliqué: ${tagInfo.key} (${tagInfo.category})`);
+          } else {
+            console.warn(`[Mail Thread] ⚠️ Échec application tag: ${tagInfo.key}`);
+          }
+        } catch (tagError) {
+          console.error(`[Mail Thread] Erreur tag ${tagInfo.key}:`, tagError);
+        }
+      }
+      
+      // Mise en quarantaine si nécessaire
+      if (quarantineReasons.length > 0) {
+        console.log(`[Mail Thread] 🔒 Mise en quarantaine nécessaire: ${quarantineReasons.join(', ')}`);
+        
+        try {
+          const quarantineResult = await this.moveToQuarantine(messageId, quarantineReasons.join(', '));
+          if (quarantineResult.success) {
+            console.log(`[Mail Thread] ✅ Message mis en quarantaine: ${messageId}`);
+          } else {
+            console.warn(`[Mail Thread] ⚠️ Échec quarantaine: ${quarantineResult.error}`);
+          }
+        } catch (quarantineError) {
+          console.error(`[Mail Thread] Erreur quarantaine:`, quarantineError);
+        }
+      }
+      
+      if (tagsToApply.length === 0) {
+        console.log(`[Mail Thread] 🏷️ Aucun tag à appliquer (tous désactivés ou non applicables)`);
+      } else {
+        console.log(`[Mail Thread] 📊 Tags appliqués: ${successCount}/${tagsToApply.length} réussis`);
+      }
+      
+    } catch (error) {
+      console.error('[Mail Thread] Erreur application tags:', error);
+    }
+  }
+
+  /**
+   * Met à jour les états des tags et synchronise avec Thunderbird
+   */
+  async updateTagStates(newTagStates) {
+    try {
+      console.log('[Admin Thread] 🔄 Mise à jour des états des tags');
+      
+      // Sauvegarder dans le storage
+      await browser.storage.local.set({ tagStates: newTagStates });
+      
+      // Mettre à jour l'état local
+      this.tagStates = { ...newTagStates };
+      
+      // Invalider le cache
+      this.invalidateTagStatesCache();
+      
+      // NOUVEAU: Synchroniser les tags avec Thunderbird
+      await this.syncTagsWithThunderbird(newTagStates);
+      
+      console.log('[Admin Thread] ✅ États des tags mis à jour et synchronisés');
+      return { success: true, synchronized: true };
+      
+    } catch (error) {
+      console.error('[Admin Thread] ❌ Erreur mise à jour états des tags:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+    /**
+   * Synchronise les tags avec Thunderbird (couleurs et états)
+   */
+  async syncTagsWithThunderbird(tagStates) {
+    try {
+      console.log('[Admin Thread] 🔄 Synchronisation tags avec Thunderbird');
+      
+      // Vérifier si l'API tags est disponible
+      if (!browser.messages || !browser.messages.tags) {
+        console.warn('[Admin Thread] ⚠️ API messages.tags non disponible');
+        return { success: false, error: 'API tags non disponible' };
+      }
+      
+      // Récupérer les tags existants dans Thunderbird
+      const existingTags = await browser.messages.tags.list();
+      console.log('[Admin Thread] 📋 Tags existants dans Thunderbird:', existingTags.length);
+      
+      let updatedCount = 0;
+      let createdCount = 0;
+      
+      // Traiter chaque tag de notre configuration
+      for (const [tagKey, tagState] of Object.entries(tagStates)) {
+        try {
+          // Trouver le tag existant
+          const existingTag = existingTags.find(tag => tag.key === tagKey);
+          
+          if (existingTag) {
+            // Mettre à jour le tag existant si la couleur a changé
+            if (existingTag.color !== tagState.color) {
+              // CORRECTION: Utiliser seulement 'color', pas 'label'
+              await browser.messages.tags.update(tagKey, {
+                color: tagState.color
+              });
+              console.log(`[Admin Thread] 🎨 Tag mis à jour: ${tagKey} → ${tagState.color}`);
+              updatedCount++;
+            } else {
+              console.log(`[Admin Thread] 📋 Tag ${tagKey} déjà à jour (${tagState.color})`);
+            }
+          } else {
+            // Créer le tag s'il n'existe pas
+            const label = this.getTagLabel(tagKey);
+            await browser.messages.tags.create(tagKey, label, tagState.color);
+            console.log(`[Admin Thread] ➕ Tag créé: ${tagKey} (${tagState.color})`);
+            createdCount++;
+          }
+          
+        } catch (tagError) {
+          console.error(`[Admin Thread] ❌ Erreur traitement tag ${tagKey}:`, tagError);
+          // Continuer avec les autres tags malgré l'erreur
+        }
+      }
+      
+      console.log(`[Admin Thread] ✅ Synchronisation terminée: ${updatedCount} mis à jour, ${createdCount} créés`);
+      return { 
+        success: true, 
+        updated: updatedCount, 
+        created: createdCount 
+      };
+      
+    } catch (error) {
+      console.error('[Admin Thread] ❌ Erreur synchronisation Thunderbird:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Met à jour la couleur d'un tag spécifique
+   */
+  async updateTagColor(tagKey, newColor, oldColor = null) {
+    try {
+      console.log(`[Admin Thread] 🎨 Mise à jour couleur tag: ${tagKey} → ${newColor}`);
+      
+      // Vérifier si le tag existe dans notre configuration
+      if (!this.tagStates[tagKey]) {
+        return { success: false, error: `Tag ${tagKey} non trouvé` };
+      }
+      
+      // Utiliser l'API Thunderbird directement
+      if (browser.messages && browser.messages.tags) {
+        const existingTags = await browser.messages.tags.list();
+        const existingTag = existingTags.find(tag => tag.key === tagKey);
+        
+        if (existingTag) {
+          // Mettre à jour le tag existant - CORRECTION: seulement la couleur
+          await browser.messages.tags.update(tagKey, {
+            color: newColor
+          });
+          console.log(`[Admin Thread] ✅ Couleur tag mise à jour dans Thunderbird: ${tagKey} → ${newColor}`);
+        } else {
+          // Créer le tag s'il n'existe pas
+          const label = this.getTagLabel(tagKey);
+          await browser.messages.tags.create(tagKey, label, newColor);
+          console.log(`[Admin Thread] ✅ Tag créé dans Thunderbird: ${tagKey} (${label}, ${newColor})`);
+        }
+        
+        return { 
+          success: true, 
+          tagKey: tagKey, 
+          newColor: newColor, 
+          oldColor: oldColor,
+          applied: true
+        };
+      } else {
+        console.warn('[Admin Thread] ⚠️ API messages.tags non disponible');
+        return { 
+          success: true, 
+          warning: 'API tags non disponible',
+          tagKey: tagKey, 
+          newColor: newColor 
+        };
+      }
+      
+    } catch (error) {
+      console.error(`[Admin Thread] ❌ Erreur mise à jour couleur tag ${tagKey}:`, error);
+      return { 
+        success: false, 
+        error: error.message, 
+        tagKey: tagKey 
+      };
+    }
+  }
+
+  /**
+   * Obtient le label d'un tag à partir de sa clé
+   */
+  getTagLabel(tagKey) {
+    const labels = {
+      'secmymail.expediteur_malveillant': 'SecMyMail: Expéditeur Malveillant',
+      'secmymail.expediteur_suspect': 'SecMyMail: Expéditeur Suspect',
+      'secmymail.expediteur_sur': 'SecMyMail: Expéditeur Sûr',
+      'secmymail.lien_malveillant': 'SecMyMail: Lien Malveillant',
+      'secmymail.lien_suspect': 'SecMyMail: Lien Suspect',
+      'secmymail.lien_sur': 'SecMyMail: Lien Sûr',
+      'secmymail.fichier_malveillant': 'SecMyMail: Fichier Malveillant',
+      'secmymail.fichier_suspect': 'SecMyMail: Fichier Suspect',
+      'secmymail.fichier_sur': 'SecMyMail: Fichier Sûr'
+    };
+    
+    return labels[tagKey] || `SecMyMail: ${tagKey}`;
+  }
+  
+
+  /**
+   * Récupère les états des tags pour l'UI
+   */
+  async getTagStatesForUI() {
+    try {
+      const tagStates = await this.getTagStates();
+      return { success: true, data: tagStates };
+    } catch (error) {
+      console.error('[Admin Thread] Erreur récupération états des tags:', error);
+      return { success: false, error: error.message };
     }
   }
 
@@ -576,7 +1372,6 @@ class BackgroundService {
           // Actions administratives via TaskManager
           default:
             try {
-              // CORRECTION: Passer l'action et tous les paramètres du message
               const result = await this.executeAdminAction(message.action, message);
               resolve(result);
             } catch (error) {
@@ -643,7 +1438,7 @@ setInterval(() => {
   if (status.mailTasks > 0 || status.adminTasks > 0) {
     console.log(`[SecMyMail] 💓 Mail Tasks: ${status.mailTasks} | Admin Tasks: ${status.adminTasks} | Processing: M:${status.isMailProcessing} A:${status.isAdminProcessing}`);
   }
-}, 60000);
+}, 600);
 
 // Export
 if (typeof module !== 'undefined' && module.exports) {

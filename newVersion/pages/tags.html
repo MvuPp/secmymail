@@ -10,31 +10,100 @@
 <body>
     <div class="container">
         <header class="header">
-            <div class="header-nav">
-                <button id="back-btn" class="nav-btn" title="Retour">
-                    <span class="nav-icon">←</span>
-                </button>
-                <button id="home-btn" class="nav-btn" title="Accueil">
-                    <span class="nav-icon">🏠</span>
-                </button>
-            </div>
-            <div class="header-title">
-                <h1>🏷️ Gestion des Tags</h1>
-                <p>Configuration du marquage automatique des emails</p>
-            </div>
-            <div class="header-actions">
-                <button id="save-settings" class="btn btn-primary">
-                    <span class="btn-icon">💾</span>
-                    Sauvegarder
-                </button>
-                <button id="reset-settings" class="btn btn-secondary">
-                    <span class="btn-icon">🔄</span>
-                    Réinitialiser
-                </button>
+            <div class="header-content">
+                <div class="header-nav">
+                    <button id="back-btn" class="back-button" title="Retour">
+                        <span class="nav-icon">←</span>
+                    </button>
+                </div>
+                <div class="header-title">
+                    <h1>🏷️ Gestion des Tags</h1>
+                    <p>Configuration du marquage automatique des emails</p>
+                </div>
+                <div class="header-spacer"></div>
             </div>
         </header>
 
         <main class="main-content">
+            <!-- Section des actions -->
+            <div class="actions-section">
+                <div class="actions-content">
+                    <div class="actions-info">
+                        <h3>⚙️ Actions</h3>
+                        <p class="save-info">Les modifications sont automatiquement sauvegardées</p>
+                    </div>
+                    <div class="actions-buttons">
+                        <button id="reset-settings" class="btn btn-secondary">
+                            <span class="btn-icon">🔄</span>
+                            Réinitialiser
+                        </button>
+                        <button id="save-settings" class="btn btn-primary btn-save">
+                            <span class="btn-icon">💾</span>
+                            Sauvegarder les modifications
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Options Simplifiée -->
+            <section class="options-section">
+                <div class="section-header">
+                    <h2>🔒 Déplacement Automatique</h2>
+                    <p>Déplace automatiquement les emails malveillants vers un dossier de sécurité</p>
+                </div>
+                
+                <div class="simple-options">
+                    <!-- Option principale -->
+                    <div class="option-row">
+                        <div class="option-info">
+                            <h3>Activer le déplacement automatique</h3>
+                            <p>Les emails détectés comme malveillants seront automatiquement déplacés</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="enable-quarantine" class="main-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Sélection du dossier -->
+                    <div class="option-row" id="folder-selection">
+                        <div class="option-info">
+                            <h3>Dossier de destination</h3>
+                            <p>Choisir le dossier où déplacer les emails malveillants</p>
+                        </div>
+                        <select id="quarantine-folder" class="folder-select">
+                            <option value="">Sélectionner un dossier...</option>
+                            <option value="INBOX/SecMyMail-Quarantine">INBOX/SecMyMail-Quarantine</option>
+                            <option value="Junk">Courrier indésirable</option>
+                            <option value="Trash">Corbeille</option>
+                        </select>
+                    </div>
+
+                    <!-- Types de menaces en liste a la ligne simple -->
+                    <div class="option-row threats-section" id="threats-selection">
+                        <div class="option-info">
+                            <h3>Types de menaces à déplacer</h3>
+                            <p>Sélectionner les types d'emails à déplacer automatiquement</p>
+                        </div>
+                        <div class="threats-list">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="quarantine-expediteur" checked>
+                                <span class="checkbox-label">📧 Expéditeurs malveillants</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="quarantine-liens" checked>
+                                <span class="checkbox-label">🔗 Liens malveillants</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="quarantine-fichiers" checked>
+                                <span class="checkbox-label">📎 Fichiers malveillants</span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
             <!-- Section Tags d'Expéditeur -->
             <section class="tag-section">
                 <div class="section-header">

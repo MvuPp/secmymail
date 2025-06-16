@@ -26,34 +26,34 @@ class TagManager {
         default_color: "#32CD32"
       },
       "secmymail.lien_malveillant": {
-        color: "#DC143C",
+        color: "#FF0000",
         tag: "Lien Malveillant",
-        default_color: "#DC143C"
+        default_color: "#FF0000"
       },
       "secmymail.lien_suspect": {
-        color: "#FFA500",
+        color: "#FF8C00",
         tag: "Lien Suspect",
-        default_color: "#FFA500"
+        default_color: "#FF8C00"
       },
       "secmymail.lien_sur": {
-        color: "#228B22",
+        color: "#32CD32",
         tag: "Lien Sûr",
-        default_color: "#228B22"
+        default_color: "#32CD32"
       },
       "secmymail.fichier_malveillant": {
-        color: "#B22222",
+        color: "#FF0000",
         tag: "Fichier Malveillant",
-        default_color: "#B22222"
+        default_color: "#FF0000"
       },
       "secmymail.fichier_suspect": {
-        color: "#DAA520",
+        color: "#FF8C00",
         tag: "Fichier Suspect",
-        default_color: "#DAA520"
+        default_color: "#FF8C00"
       },
       "secmymail.fichier_sur": {
-        color: "#2E8B57",
+        color: "#32CD32",
         tag: "Fichier Sûr",
-        default_color: "#2E8B57"
+        default_color: "#32CD32"
       }
     };
     
@@ -102,13 +102,18 @@ class TagManager {
       for (const [key, data] of Object.entries(this.tagsData)) {
         try {
           if (key in tagDict) {
-            console.log(`[Tags] Mise à jour du tag existant: ${key}`);
-            const tag = tagDict[key];
-            await browser.messages.tags.update(tag.key, {
-              color: data.color,
-              tag: data.tag
-            });
-            this.tags[key] = tag;
+            const existingTag = tagDict[key];
+            // Vérifier si la couleur a changé
+            if (existingTag.color !== data.color) {
+              console.log(`[Tags] Mise à jour couleur du tag existant: ${key} (${existingTag.color} → ${data.color})`);
+              // CORRECTION: Ne passer que la couleur, pas le label
+              await browser.messages.tags.update(key, {
+                color: data.color
+              });
+            } else {
+              console.log(`[Tags] Tag ${key} déjà à jour`);
+            }
+            this.tags[key] = existingTag;
           } else {
             console.log(`[Tags] Création du nouveau tag: ${key}`);
             this.tags[key] = await browser.messages.tags.create(key, data.tag, data.color);

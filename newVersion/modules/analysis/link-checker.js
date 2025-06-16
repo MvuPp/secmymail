@@ -26,8 +26,8 @@ class LinkChecker {
         // Ajouter les listes personnalisées
         this.whiteListDomains = [];
         this.blackListDomains = [];
-        this.whiteListKey = 'domain-whitelist';
-        this.blackListKey = 'domain-blacklist';
+        this.whiteListKey = STORAGE_KEYS.DOMAIN_WHITELIST;
+        this.blackListKey = STORAGE_KEYS.DOMAIN_BLACKLIST;
         
         // Charger les listes au démarrage
         this.loadCustomLists();
@@ -38,12 +38,12 @@ class LinkChecker {
      */
     async loadCustomLists() {
         try {
-            const whiteListResult = await browser.storage.sync.get(this.whiteListKey);
-            const blackListResult = await browser.storage.sync.get(this.blackListKey);
+            // Utiliser le gestionnaire de storage centralisé au lieu de browser.storage.sync
+            const whiteListDomains = await storage.get(this.whiteListKey, []);
+            const blackListDomains = await storage.get(this.blackListKey, []);
             
-            // Correction du nom de variable (était whiteListDomaines au lieu de whiteListDomains)
-            this.whiteListDomains = whiteListResult[this.whiteListKey] || [];
-            this.blackListDomains = blackListResult[this.blackListKey] || [];
+            this.whiteListDomains = Array.isArray(whiteListDomains) ? whiteListDomains : [];
+            this.blackListDomains = Array.isArray(blackListDomains) ? blackListDomains : [];
             
             console.log(`[LinkChecker] Listes chargées: ${this.whiteListDomains.length} blancs, ${this.blackListDomains.length} noirs`);
         } catch (error) {
@@ -246,7 +246,7 @@ class LinkChecker {
      */
     async compareWhiteList(domain) {
         await this.loadCustomLists(); // Recharger pour avoir les dernières données
-        return this.whiteListDomains.some(item => domain.includes(item) || item.includes(domain));
+        return this.whiteListDomains.some(item => domain === item || domain.endsWith('.' + item));
     }
 
     /**
@@ -254,7 +254,7 @@ class LinkChecker {
      */
     async compareBlackList(domain) {
         await this.loadCustomLists(); // Recharger pour avoir les dernières données
-        return this.blackListDomains.some(item => domain.includes(item) || item.includes(domain));
+        return this.blackListDomains.some(item => domain === item || domain.endsWith('.' + item));
     }
 
     /**
