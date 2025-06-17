@@ -209,52 +209,6 @@ class FolderManager {
   }
 
   /**
-   * Nettoie les anciens messages des dossiers de sécurité
-   */
-  async cleanupSecurityFolders(daysOld = 30) {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-
-    try {
-      for (const accountId of this.accounts.keys()) {
-        const folders = ['Malicious', 'Quarantine', 'Suspicious'];
-        
-        for (const folderName of folders) {
-          const folder = await this.findFolder(accountId, folderName);
-          if (folder) {
-            await this.cleanupFolder(folder, cutoffDate);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('[FolderManager] Erreur nettoyage dossiers:', error);
-    }
-  }
-
-  /**
-   * Nettoie un dossier spécifique
-   */
-  async cleanupFolder(folder, cutoffDate) {
-    try {
-      const messages = await browser.messages.query({ folder: folder });
-      const messagesToDelete = [];
-
-      for (const message of messages.messages) {
-        if (message.date < cutoffDate) {
-          messagesToDelete.push(message.id);
-        }
-      }
-
-      if (messagesToDelete.length > 0) {
-        await browser.messages.delete(messagesToDelete, true); // true = skip trash
-        console.log(`[FolderManager] ${messagesToDelete.length} anciens messages supprimés de ${folder.name}`);
-      }
-    } catch (error) {
-      console.error(`[FolderManager] Erreur nettoyage dossier ${folder.name}:`, error);
-    }
-  }
-
-  /**
    * Récupère la configuration des dossiers
    */
   async getFolderSettings() {

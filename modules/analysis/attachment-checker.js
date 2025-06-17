@@ -345,45 +345,6 @@ class AttachmentChecker {
   clearCache() {
     this.cache.clear();
   }
-
-  /**
-   * Récupère les statistiques des pièces jointes
-   */
-  async getStats() {
-    const stats = await storage.get('attachmentStats', {
-      totalAnalyzed: 0,
-      dangerous: 0,
-      suspicious: 0,
-      safe: 0,
-      blocked: 0
-    });
-    return stats;
-  }
-
-  /**
-   * Met à jour les statistiques
-   */
-  async updateStats(analysisResults) {
-    const stats = await this.getStats();
-    
-    stats.totalAnalyzed += analysisResults.count;
-    
-    for (const result of analysisResults.details) {
-      switch (result.risk) {
-        case 'high':
-          stats.dangerous++;
-          break;
-        case 'medium':
-          stats.suspicious++;
-          break;
-        case 'low':
-          stats.safe++;
-          break;
-      }
-    }
-
-    await storage.set('attachmentStats', stats);
-  }
 }
 
 // Instance singleton
