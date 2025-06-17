@@ -196,21 +196,6 @@ class EmailChecker {
   }
 
   /**
-   * Force le rechargement des données (pour la synchronisation)
-   */
-  async refreshData() {
-    this.clearCache();
-    console.log('[EmailChecker] Cache vidé - données actualisées');
-  }
-
-  /**
-   * Vide le cache pour un email spécifique
-   */
-  clearCacheForEmail(email) {
-    this.cache.delete(email.toLowerCase().trim());
-  }
-
-  /**
    * Vide tout le cache
    */
   clearCache() {

@@ -501,14 +501,6 @@ class LinkChecker {
         if (status > 0) return 'medium';
         return 'low';
     }
-
-    /**
-     * Raccourcit une URL pour l'affichage
-     */
-    shortenUrl(url, maxLength = 50) {
-        if (url.length <= maxLength) return url;
-        return url.substring(0, maxLength - 3) + '...';
-    }
 }
 
 // Instance singleton
