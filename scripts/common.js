@@ -1,139 +1,188 @@
 /**
- * Associe un bouton à une action de lien ou de popup.
- * @param {HTMLElement} button - Le bouton à associer.
+ * Utilitaires communs
  */
-function linkButton(button) {
-    if (button.hasAttribute("popup")) {
-        button.addEventListener("click", function() {
-            browser.windows.create({
-                url: this.getAttribute("link"),
-                type: "popup",
-                width: parseInt(this.getAttribute("width")) || 400,
-                height: parseInt(this.getAttribute("height")) || 600
-            });
-        });
-    } else {
-        button.addEventListener("click", function() {
-            window.location.href = this.getAttribute("link");
-        });
-    }
-}
-
-document.querySelectorAll("button[link]").forEach(function(button) {
-    linkButton(button);
-});
 
 /**
- * Trouve un template HTML par son nom.
- * @param {string} templateName - Le nom du template à trouver.
- * @returns {HTMLElement|null} - Retourne l'élément du template ou null s'il n'est pas trouvé.
+ * Débounce une fonction
  */
-function findTemplate(templateName) {
-    for (const node of document.querySelectorAll("div[template]")) {
-        let template = node.getAttribute("template");
-        if (template && template.endsWith(templateName)) {
-            return node;
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Throttle une fonction
+ */
+function throttle(func, limit) {
+  let inThrottle;
+  return function() {
+    const args = arguments;
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+}
+
+/**
+ * Valide une adresse email
+ */
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * Valide un domaine
+ */
+function isValidDomain(domain) {
+  const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?)*$/;
+  return domainRegex.test(domain) && domain.length <= 253;
+}
+
+/**
+ * Formate un nombre avec des séparateurs
+ */
+function formatNumber(num) {
+  return num.toLocaleString();
+}
+
+/**
+ * Formate une date
+ */
+function formatDate(date) {
+  return new Date(date).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+/**
+ * Système de notification toast
+ */
+class Toast {
+  static show(message, type = 'info', duration = 3000) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    // Styles inline pour éviter les dépendances
+    Object.assign(toast.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '12px 20px',
+      borderRadius: '6px',
+      color: 'white',
+      fontWeight: '500',
+      zIndex: '10000',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      transform: 'translateX(100%)',
+      transition: 'transform 0.3s ease'
+    });
+
+    // Couleurs selon le type
+    const colors = {
+      success: '#28a745',
+      error: '#dc3545',
+      warning: '#ffc107',
+      info: '#17a2b8'
+    };
+    toast.style.backgroundColor = colors[type] || colors.info;
+
+    document.body.appendChild(toast);
+
+    // Animation d'entrée
+    setTimeout(() => {
+      toast.style.transform = 'translateX(0)';
+    }, 10);
+
+    // Suppression automatique
+    setTimeout(() => {
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
         }
-    }
-    return null;
+      }, 300);
+    }, duration);
+  }
+
+  static success(message, duration) {
+    this.show(message, 'success', duration);
+  }
+
+  static error(message, duration) {
+    this.show(message, 'error', duration);
+  }
+
+  static warning(message, duration) {
+    this.show(message, 'warning', duration);
+  }
+
+  static info(message, duration) {
+    this.show(message, 'info', duration);
+  }
 }
 
 /**
- * Charge un template HTML depuis une URL.
- * @param {string} url - L'URL du template à charger.
- * @returns {Promise<string>} - Retourne le contenu HTML du template.
- * @throws {Error} - Lance une erreur si le chargement échoue.
+ * Gestionnaire de loading
  */
-async function loadHTMLTemplate(url) {
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`Failed to load template: ${url}`);
-    }
-    return await response.text();
+class LoadingManager {
+  static show(element, text = 'Chargement...') {
+    if (!element) return;
+    
+    element.disabled = true;
+    element.dataset.originalText = element.textContent;
+    element.textContent = text;
+    element.classList.add('loading');
+  }
+
+  static hide(element) {
+    if (!element) return;
+    
+    element.disabled = false;
+    element.textContent = element.dataset.originalText || element.textContent;
+    element.classList.remove('loading');
+    delete element.dataset.originalText;
+  }
 }
 
-/**
- * Insère les templates HTML dans la page.
- */
-async function insertTemplates() {
-    const templates = document.querySelectorAll("div[template]");
-
-    for (const template of templates) {
-        const templateURL = template.getAttribute("template");
-        try {
-            template.innerHTML = await loadHTMLTemplate(templateURL);
-
-            const scripts = template.querySelectorAll("script");
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement("script");
-                newScript.textContent = oldScript.textContent;
-                if (oldScript.src) newScript.src = oldScript.src;
-                if (oldScript.defer) newScript.defer = oldScript.defer;
-                document.body.appendChild(newScript);
-            });
-
-        } catch (error) {
-            console.error("Error loading template:", error);
-        }
-    }
+// Export pour les modules ES6
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    debounce,
+    throttle,
+    isValidEmail,
+    isValidDomain,
+    formatNumber,
+    formatDate,
+    Toast,
+    LoadingManager
+  };
 }
 
-/**
- * Gère le clic sur le bouton de retour.
- */
-function handleBackArrowClick() {
-    window.history.back();
-}
+// Variables globales pour compatibilité
+window.SecMyMailUtils = {
+  debounce,
+  throttle,
+  isValidEmail,
+  isValidDomain,
+  formatNumber,
+  formatDate,
+  Toast,
+  LoadingManager
+};
 
-/**
- * Gère le clic sur le bouton de fermeture.
- */
-function handleCloseClick() {
-    window.close();
-}
-
-/**
- * Gère le clic sur le bouton d'accueil.
- * @param {boolean} value - Indique si la redirection doit se faire vers '../popup.html' ou 'popup.html'.
- */
-function handleHomeClick(value) {
-    if (value) {
-        window.location.href = '../popup.html';
-    } else {
-        window.location.href = 'popup.html';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const backArrowButton = document.getElementById('back_arrow');
-    const closeButton = document.getElementById('close');
-    const logoButton = document.getElementById('logo_popup');
-    const homeButton = document.getElementById('logo');
-
-    const currentPage = window.location.pathname.split('/').pop();
-    const pagesToClose = ['domain-blacklist.html', 'domain-whitelist.html', 'email-blacklist.html', 'email-whitelist.html', 'tags.html'];
-
-    if (backArrowButton) {
-        backArrowButton.addEventListener('click', handleBackArrowClick);
-    }
-
-    if (closeButton && pagesToClose.includes(currentPage)) {
-        closeButton.addEventListener('click', handleCloseClick);
-    }
-
-    if (logoButton) {
-        logoButton.addEventListener('click', handleCloseClick);
-    }
-
-    if (homeButton) {
-        homeButton.addEventListener('click', function(event) {
-            if (homeButton.name === 'balise') {
-                handleHomeClick(true);
-            } else {
-                handleHomeClick(false);
-            }
-        });
-    }
-});
-
-window.addEventListener("DOMContentLoaded", insertTemplates);
