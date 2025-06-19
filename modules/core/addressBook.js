@@ -3,11 +3,7 @@
  * Permet de récupérer les contacts et de les ajouter à la liste blanche
  */
 
-// Clés de stockage
-const STORAGE_KEYS = {
-  ADDRESS_BOOK_SYNC: 'addressBookSync',
-  EMAIL_WHITELIST: 'emailWhitelist'
-};
+import { storage, STORAGE_KEYS } from './storage.js';
 
 /**
  * Gestionnaire du carnet d'adresses
@@ -42,10 +38,10 @@ class AddressBookManager {
    */
   async loadSyncState() {
     try {
-      const result = await browser.storage.local.get(STORAGE_KEYS.ADDRESS_BOOK_SYNC);
+      const result = await storage.get(STORAGE_KEYS.ADDRESS_BOOK_SYNC);
       
-      if (result && result[STORAGE_KEYS.ADDRESS_BOOK_SYNC]) {
-        this.syncState = { ...this.syncState, ...result[STORAGE_KEYS.ADDRESS_BOOK_SYNC] };
+      if (result) {
+        this.syncState = { ...this.syncState, ...result };
       } else {
         await this.saveSyncState();
       }
@@ -61,9 +57,7 @@ class AddressBookManager {
    */
   async saveSyncState() {
     try {
-      await browser.storage.local.set({ 
-        [STORAGE_KEYS.ADDRESS_BOOK_SYNC]: this.syncState 
-      });
+      await storage.set(STORAGE_KEYS.ADDRESS_BOOK_SYNC, this.syncState);
       
       console.log('[AddressBookManager] État de synchronisation sauvegardé');
     } catch (error) {
@@ -176,8 +170,7 @@ class AddressBookManager {
         
         try {
             // Récupérer la liste blanche actuelle
-            const result = await browser.storage.local.get('emailWhitelist');
-            let whitelist = result.emailWhitelist || [];
+            let whitelist = await storage.get(STORAGE_KEYS.EMAIL_WHITELIST, []);
             
             let addedCount = 0;
             
@@ -198,7 +191,7 @@ class AddressBookManager {
             }
             
             if (addedCount > 0) {
-            await browser.storage.local.set({ emailWhitelist: whitelist });
+            await storage.set(STORAGE_KEYS.EMAIL_WHITELIST, whitelist);
             console.log(`[AddressBookManager] ${addedCount} adresses ajoutées à la liste blanche`);
             } else {
             console.log('[AddressBookManager] Aucune nouvelle adresse à ajouter');

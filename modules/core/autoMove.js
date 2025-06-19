@@ -1,11 +1,5 @@
-import { storage } from './storage.js';
+import { storage, STORAGE_KEYS } from './storage.js';
 import { folderManager } from './folders.js';
-
-// Clés de stockage pour les options et statistiques
-const STORAGE_KEYS = {
-  AUTO_MOVE_OPTIONS: 'autoMoveOptions',
-  AUTO_MOVE_STATS: 'autoMoveStats'
-};
 
 /**
  * Module de déplacement automatique des messages
@@ -46,11 +40,11 @@ class AutoMoveManager {
    */
   async loadOptions() {
     try {
-      const savedOptions = await browser.storage.local.get(STORAGE_KEYS.AUTO_MOVE_OPTIONS);
-      if (savedOptions && savedOptions[STORAGE_KEYS.AUTO_MOVE_OPTIONS]) {
-        this.options = { ...this.options, ...savedOptions[STORAGE_KEYS.AUTO_MOVE_OPTIONS] };
+      const savedOptions = await storage.get(STORAGE_KEYS.AUTO_MOVE_OPTIONS);
+      if (savedOptions) {
+        this.options = { ...this.options, ...savedOptions };
       } else {
-        await browser.storage.local.set({ [STORAGE_KEYS.AUTO_MOVE_OPTIONS]: this.options });
+        await storage.set(STORAGE_KEYS.AUTO_MOVE_OPTIONS, this.options);
       }
       console.log('[AutoMoveManager] Options chargées:', this.options);
     } catch (error) {
@@ -63,11 +57,11 @@ class AutoMoveManager {
    */
   async loadStats() {
     try {
-      const savedStats = await browser.storage.local.get(STORAGE_KEYS.AUTO_MOVE_STATS);
-      if (savedStats && savedStats[STORAGE_KEYS.AUTO_MOVE_STATS]) {
-        this.stats = { ...this.stats, ...savedStats[STORAGE_KEYS.AUTO_MOVE_STATS] };
+      const savedStats = await storage.get(STORAGE_KEYS.AUTO_MOVE_STATS);
+      if (savedStats) {
+        this.stats = { ...this.stats, ...savedStats };
       } else {
-        await browser.storage.local.set({ [STORAGE_KEYS.AUTO_MOVE_STATS]: this.stats });
+        await storage.set(STORAGE_KEYS.AUTO_MOVE_STATS, this.stats);
       }
       console.log('[AutoMoveManager] Statistiques chargées:', this.stats);
     } catch (error) {
@@ -81,7 +75,7 @@ class AutoMoveManager {
   async updateOptions(newOptions) {
     try {
       this.options = { ...this.options, ...newOptions };
-      await browser.storage.local.set({ [STORAGE_KEYS.AUTO_MOVE_OPTIONS]: this.options });
+      await storage.set(STORAGE_KEYS.AUTO_MOVE_OPTIONS, this.options);
       console.log('[AutoMoveManager] Options mises à jour:', this.options);
       return { success: true };
     } catch (error) {
@@ -96,7 +90,7 @@ class AutoMoveManager {
   async incrementStats() {
     try {
       this.stats.totalQuarantined++;
-      await browser.storage.local.set({ [STORAGE_KEYS.AUTO_MOVE_STATS]: this.stats });
+      await storage.set(STORAGE_KEYS.AUTO_MOVE_STATS, this.stats);
       return this.stats;
     } catch (error) {
       console.error('[AutoMoveManager] Erreur mise à jour statistiques:', error);
@@ -213,8 +207,8 @@ class AutoMoveManager {
       totalQuarantined: 0
     };
     
-    await browser.storage.local.set({ [STORAGE_KEYS.AUTO_MOVE_OPTIONS]: this.options });
-    await browser.storage.local.set({ [STORAGE_KEYS.AUTO_MOVE_STATS]: this.stats });
+    await storage.set(STORAGE_KEYS.AUTO_MOVE_OPTIONS, this.options);
+    await storage.set(STORAGE_KEYS.AUTO_MOVE_STATS, this.stats);
     
     console.log('[AutoMoveManager] Options et statistiques réinitialisées');
     return { success: true };
