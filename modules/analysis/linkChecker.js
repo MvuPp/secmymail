@@ -261,29 +261,43 @@ class LinkChecker {
      * Compare les liens avec les listes (basé sur liens.js)
      */
     async compareLinks(domains) {
-        let results = [];
+        // S'assurer que les listes sont à jour
+        await this.loadCustomLists();
+        
+        // Si aucun domaine à vérifier
+        if (!domains || domains.length === 0) {
+            return 0;
+        }
+        
+        let allWhitelisted = true;
         
         for (let domain of domains) {
-            let isWhiteListed = await this.compareWhiteList(domain);
-            let isBlackListed = await this.compareBlackList(domain);
+            // Vérifier d'abord la liste noire (prioritaire)
+            const isBlackListed = this.blackListDomains.some(item => 
+                domain === item || domain.endsWith('.' + item)
+            );
             
             if (isBlackListed) {
-                results.push(-1);
-            } else if (isWhiteListed) {
-                results.push(1);
-            } else {
-                results.push(0);
+                return -1; // Retourner immédiatement -1 si un domaine est en liste noire
+            }
+            
+            // Vérifier la liste blanche
+            const isWhiteListed = this.whiteListDomains.some(item => 
+                domain === item || domain.endsWith('.' + item)
+            );
+            
+            if (!isWhiteListed) {
+                allWhitelisted = false;
             }
         }
-
-        // Logique de liens.js
-        if (results.includes(-1)) {
-            return -1; // Au moins un lien dangereux
-        } else if (results.includes(0)) {
-            return 0; // Au moins un lien inconnu
-        } else {
-            return 1; // Tous les liens sont sûrs
+        
+        // Si tous les domaines sont en liste blanche, retourner 1
+        if (allWhitelisted && domains.length > 0) {
+            return 1;
         }
+        
+        // Par défaut, retourner 0 (neutre)
+        return 0;
     }
 
     /**

@@ -45,7 +45,7 @@ function isValidEmail(email) {
  * Valide un domaine
  */
 function isValidDomain(domain) {
-  const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?)*$/;
+  const domainRegex = /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;
   return domainRegex.test(domain) && domain.length <= 253;
 }
 
@@ -53,7 +53,7 @@ function isValidDomain(domain) {
  * Formate un nombre avec des séparateurs
  */
 function formatNumber(num) {
-  return num.toLocaleString();
+  return num.toLocaleString('fr-FR');
 }
 
 /**

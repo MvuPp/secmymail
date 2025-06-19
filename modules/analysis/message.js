@@ -133,22 +133,20 @@ class MessageAnalyzer {
             
             // Analyse de l'expéditeur avec emailChecker
             const expediteurStatus = await emailChecker.checkEmail(emailDetails.expediteur.email);
-            const expediteurAnalysis = {
-                status: expediteurStatus,
-                email: emailDetails.expediteur.email,
-                domain: emailDetails.expediteur.domain
-            };
 
-            // Structure simplifiée pour background.js
+            let expediteurValue = expediteurStatus;
+            let liensValue = this.convertRiskToValue(linkAnalysis.risk);
+            let fichiersValue = this.convertRiskToValue(emailDetails.attachments.analysis.risk);
+
             const result = {
                 messageId: emailDetails.id,
-                expediteur: expediteurAnalysis.status,  // -1, 0 ou 1
-                liens: linkAnalysis.status,             // -1, 0 ou 1
-                fichiers: emailDetails.attachments.analysis.status, // -1, 0 ou 1
+                expediteur: expediteurValue,
+                liens: liensValue,
+                fichiers: fichiersValue,
                 details: {
                     expediteurDetails: {
                         ...emailDetails.expediteur,
-                        trustLevel: expediteurAnalysis.status // Ajouter le niveau de confiance calculé
+                        trustLevel: expediteurStatus
                     },
                     linkDetails: linkAnalysis,
                     attachmentDetails: emailDetails.attachments.analysis,
@@ -172,6 +170,25 @@ class MessageAnalyzer {
         } catch (error) {
             console.error(`[MessageAnalyzer] Erreur lors de l'analyse du message ${messageId}:`, error);
             throw error;
+        }
+    }
+
+    /**
+     * Convertit les niveaux de risque textuels en valeurs numériques pour background.js
+     * @param {string} risk - Niveau de risque ('high', 'medium', 'low', 'none')
+     * @returns {number} - Valeur numérique (-1, 0, 1)
+     */
+    convertRiskToValue(risk) {
+        switch(risk) {
+            case 'high':
+                return -1; // Malveillant
+            case 'medium':
+                return 0;  // Suspect
+            case 'low':
+            case 'none':
+                return 1;  // Sûr
+            default:
+                return 0;  // Par défaut suspect
         }
     }
 
