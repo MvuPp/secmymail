@@ -7,6 +7,7 @@ import { messageAnalyzer } from '../modules/analysis/message.js';
 import { tagManager } from '../modules/core/tags.js';
 import { autoMoveManager } from '../modules/core/autoMove.js';
 import { addressBookManager } from '../modules/core/addressBook.js';
+import { storage, STORAGE_KEYS } from '../modules/core/storage.js';
 
 /**
  * Gestionnaire de tâches asynchrones simulant le multithreading
@@ -185,10 +186,10 @@ class BackgroundService {
     }
     
     try {
-      const result = await browser.storage.local.get(['tagStates']);
+      const result = await storage.get(STORAGE_KEYS.TAG_STATES);
       
-      if (result.tagStates) {
-        this.tagStatesCache = result.tagStates;
+      if (result) {
+        this.tagStatesCache = result;
         this.tagStatesCacheExpiry = now + this.CACHE_DURATION;
         console.log('[SecMyMail] 📊 États des tags mis en cache');
         return this.tagStatesCache;
@@ -735,7 +736,7 @@ class BackgroundService {
       console.log('[Admin Thread] 🔄 Mise à jour des états des tags');
       
       // Sauvegarder dans le storage
-      await browser.storage.local.set({ tagStates: newTagStates });
+      await storage.set(STORAGE_KEYS.TAG_STATES, newTagStates);
       
       // Mettre à jour l'état local
       this.tagStates = { ...newTagStates };
@@ -915,12 +916,18 @@ class BackgroundService {
   async addToList(listType, type, value) {
     try {
       const storageKey = `${type}${listType.charAt(0).toUpperCase() + listType.slice(1)}`;
-      const stored = await browser.storage.local.get([storageKey]);
-      const currentList = stored[storageKey] || [];
+      const mapKey = {
+        'emailWhitelist': STORAGE_KEYS.EMAIL_WHITELIST,
+        'emailBlacklist': STORAGE_KEYS.EMAIL_BLACKLIST,
+        'domainWhitelist': STORAGE_KEYS.DOMAIN_WHITELIST,
+        'domainBlacklist': STORAGE_KEYS.DOMAIN_BLACKLIST
+      }[storageKey];
+      
+      const currentList = await storage.get(mapKey, []);
       
       if (!currentList.includes(value)) {
         currentList.push(value);
-        await browser.storage.local.set({ [storageKey]: currentList });
+        await storage.set(mapKey, currentList);
         
         console.log(`[Admin Thread] ✅ Ajouté à ${storageKey}: ${value}`);
         return { success: true, added: value, listSize: currentList.length };
@@ -937,13 +944,19 @@ class BackgroundService {
   async removeFromList(listType, type, value) {
     try {
       const storageKey = `${type}${listType.charAt(0).toUpperCase() + listType.slice(1)}`;
-      const stored = await browser.storage.local.get([storageKey]);
-      const currentList = stored[storageKey] || [];
+      const mapKey = {
+        'emailWhitelist': STORAGE_KEYS.EMAIL_WHITELIST,
+        'emailBlacklist': STORAGE_KEYS.EMAIL_BLACKLIST,
+        'domainWhitelist': STORAGE_KEYS.DOMAIN_WHITELIST,
+        'domainBlacklist': STORAGE_KEYS.DOMAIN_BLACKLIST
+      }[storageKey];
+      
+      const currentList = await storage.get(mapKey, []);
       
       const index = currentList.indexOf(value);
       if (index > -1) {
         currentList.splice(index, 1);
-        await browser.storage.local.set({ [storageKey]: currentList });
+        await storage.set(mapKey, currentList);
         
         console.log(`[Admin Thread] ✅ Supprimé de ${storageKey}: ${value}`);
         return { success: true, removed: value, listSize: currentList.length };
@@ -959,7 +972,7 @@ class BackgroundService {
 
   async updateConfig(newConfig) {
     try {
-      await browser.storage.local.set(newConfig);
+      await storage.set('appConfig', newConfig);
       
       if (newConfig.processingDelay) {
         this.processingConfig.processingDelay = newConfig.processingDelay;
@@ -980,17 +993,19 @@ class BackgroundService {
   async getAllLists() {
     try {
       const keys = [
-        'emailWhitelist', 'emailBlacklist',
-        'domainWhitelist', 'domainBlacklist'
+        STORAGE_KEYS.EMAIL_WHITELIST,
+        STORAGE_KEYS.EMAIL_BLACKLIST,
+        STORAGE_KEYS.DOMAIN_WHITELIST,
+        STORAGE_KEYS.DOMAIN_BLACKLIST
       ];
       
-      const stored = await browser.storage.local.get(keys);
+      const results = await Promise.all(keys.map(key => storage.get(key, [])));
       
       const lists = {
-        emailWhitelist: stored.emailWhitelist || [],
-        emailBlacklist: stored.emailBlacklist || [],
-        domainWhitelist: stored.domainWhitelist || [],
-        domainBlacklist: stored.domainBlacklist || []
+        emailWhitelist: results[0],
+        emailBlacklist: results[1],
+        domainWhitelist: results[2],
+        domainBlacklist: results[3]
       };
       
       console.log(`[Admin Thread] 📋 Listes récupérées:`, {

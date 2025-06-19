@@ -2,6 +2,8 @@
  * Tags Manager - Gestion des tags SecMyMail - Basé sur tags.js existant
  */
 
+import { storage, STORAGE_KEYS } from './storage.js';
+
 class TagManager {
   constructor() {
     this.tagStates = {};
@@ -136,11 +138,11 @@ class TagManager {
     try {
       console.log('[Tags] Chargement des états des tags...');
       
-      const stored = await browser.storage.local.get(['tagStates']);
+      const stored = await storage.get(STORAGE_KEYS.TAG_STATES);
       
-      if (stored.tagStates && Object.keys(stored.tagStates).length > 0) {
+      if (stored && Object.keys(stored).length > 0) {
         console.log('[Tags] États des tags chargés depuis le storage');
-        this.tagStates = stored.tagStates;
+        this.tagStates = stored;
       } else {
         console.log('[Tags] Aucun état de tag trouvé, utilisation des valeurs par défaut');
         // Initialiser avec tous les tags actifs par défaut
@@ -174,7 +176,7 @@ class TagManager {
 
   async saveTagStates() {
     try {
-      await browser.storage.local.set({ tagStates: this.tagStates });
+      await storage.set(STORAGE_KEYS.TAG_STATES, this.tagStates);
       console.log('[Tags] États des tags sauvegardés');
     } catch (error) {
       console.error('[Tags] Erreur sauvegarde états tags:', error);
@@ -326,13 +328,13 @@ class TagManager {
     try {
       console.log(`[Tags] 🔄 Fallback: stockage simulé pour tag ${tagKey} sur message ${messageId}`);
       
-      const simulatedTags = await browser.storage.local.get(['simulatedTags']) || { simulatedTags: {} };
+      const simulatedTags = await storage.get('simulatedTags', { simulatedTags: {} });
       if (!simulatedTags.simulatedTags) simulatedTags.simulatedTags = {};
       if (!simulatedTags.simulatedTags[messageId]) simulatedTags.simulatedTags[messageId] = [];
       
       if (!simulatedTags.simulatedTags[messageId].includes(tagKey)) {
         simulatedTags.simulatedTags[messageId].push(tagKey);
-        await browser.storage.local.set(simulatedTags);
+        await storage.set('simulatedTags', simulatedTags);
         
         console.log(`[Tags] ✅ Tag ${tagKey} stocké en fallback pour message ${messageId}`);
         return true;
@@ -390,8 +392,8 @@ class TagManager {
       const realTags = message.tags || [];
       
       // Récupérer les tags simulés
-      const stored = await browser.storage.local.get(['simulatedTags']);
-      const simulatedTags = stored.simulatedTags?.[messageId] || [];
+      const stored = await storage.get('simulatedTags');
+      const simulatedTags = stored?.simulatedTags?.[messageId] || [];
       
       return {
         real: realTags,
@@ -418,10 +420,10 @@ class TagManager {
       }
       
       // Nettoyer les tags simulés
-      const stored = await browser.storage.local.get(['simulatedTags']) || { simulatedTags: {} };
-      if (stored.simulatedTags && stored.simulatedTags[messageId]) {
+      const stored = await storage.get('simulatedTags');
+      if (stored && stored.simulatedTags && stored.simulatedTags[messageId]) {
         delete stored.simulatedTags[messageId];
-        await browser.storage.local.set(stored);
+        await storage.set('simulatedTags', stored);
       }
       
       console.log(`[Tags] Tags SecMyMail nettoyés du message ${messageId}`);
