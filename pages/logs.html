@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecMyMail - Journalisation</title>
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/logs.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <button class="back-button" id="back-btn">←</button>
+            <h1>Gestion des listes</h1>
+        </header>
+
+        <main class="main-content">
+            <div class="logs-section">
+                <h2>📜 Journalisation</h2>
+                <p>Consultez les logs de l’application pour suivre les actions effectuées.</p>
+                <div class="logs-list" id="logsList">
+                    <!-- Les logs seront insérés ici dynamiquement -->
+                </div>
+            </div>
+            <!-- Actions globales -->
+            <div class="global-actions">
+                <button class="btn btn-secondary" id="export-logs">
+                    📤 Exporter les logs
+                </button>
+            
+                <button class="btn btn-danger" id="clear-current-logs">
+                    🗑️ Vider la liste courante
+                </button>
+            </div>
+
+            
+        </main>
+    </div>
+
+    <script src="../scripts/ui/logs.js"></script>
+</body>
+    
