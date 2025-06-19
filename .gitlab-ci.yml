@@ -18,8 +18,8 @@ build:
       - build/secmymail.xpi
     expire_in: never
   only:
-    - tags
     - main
+    - develop
 
 upload:
   stage: release
@@ -28,9 +28,14 @@ upload:
     - build
   script:
     - |
-      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file build/secmymail.xpi "${PACKAGE_REGISTRY_URL}/secmymail.xpi"
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file build/secmymail.xpi "${PACKAGE_REGISTRY_URL}/secmymail.xpi"
+      else
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file build/secmymail.xpi "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/secmymail/${CI_COMMIT_SHORT_SHA}/secmymail.xpi"
+      fi
   only:
-    - tags
+    - main
+    - develop
 
 release:
   stage: release
@@ -39,15 +44,16 @@ release:
     - build
     - upload
   script:
-    - echo "Creating release for tag ${CI_COMMIT_TAG}"
+    - echo "Creating release for commit ${CI_COMMIT_SHORT_SHA}"
   release:
-    tag_name: $CI_COMMIT_TAG
-    name: 'Release $CI_COMMIT_TAG'
-    description: 'SecMyMail Extension Release $CI_COMMIT_TAG'
+    tag_name: 'auto-${CI_COMMIT_SHORT_SHA}'
+    name: 'Auto Release ${CI_COMMIT_SHORT_SHA}'
+    description: 'SecMyMail Extension Auto Release from ${CI_COMMIT_REF_NAME} branch'
     assets:
       links:
         - name: 'secmymail.xpi'
-          url: '${PACKAGE_REGISTRY_URL}/secmymail.xpi'
+          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/secmymail/${CI_COMMIT_SHORT_SHA}/secmymail.xpi'
           link_type: 'package'
   only:
-    - tags
+    - main
+    - develop
