@@ -1,21 +1,6 @@
 /**
  * Interface de gestion des listes blanches et noires - Adaptée au HTML existant
  */
-
-// Import du StorageManager pour les opérations de stockage direct
-let storage = null;
-let STORAGE_KEYS = null;
-
-// Initialiser le storage manager dynamiquement
-(async () => {
-  try {
-    const storageModule = await import('../../modules/core/storage.js');
-    storage = storageModule.storage;
-    STORAGE_KEYS = storageModule.STORAGE_KEYS;
-  } catch (error) {
-    console.warn('[ListsUI] Impossible d\'importer StorageManager, utilisation fallback');
-  }
-})();
 class ListsUI {
   constructor() {
     this.emailWhitelist = [];

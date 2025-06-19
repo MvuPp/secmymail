@@ -7,7 +7,6 @@ import { messageAnalyzer } from '../modules/analysis/message.js';
 import { tagManager } from '../modules/core/tags.js';
 import { autoMoveManager } from '../modules/core/autoMove.js';
 import { addressBookManager } from '../modules/core/addressBook.js';
-import { storage, STORAGE_KEYS } from '../modules/core/storage.js';
 
 /**
  * Gestionnaire de tâches asynchrones simulant le multithreading
@@ -186,10 +185,10 @@ class BackgroundService {
     }
     
     try {
-      const result = await storage.get(STORAGE_KEYS.TAG_STATES);
+      const result = await browser.storage.local.get(['tagStates']);
       
-      if (result) {
-        this.tagStatesCache = result;
+      if (result.tagStates) {
+        this.tagStatesCache = result.tagStates;
         this.tagStatesCacheExpiry = now + this.CACHE_DURATION;
         console.log('[SecMyMail] 📊 États des tags mis en cache');
         return this.tagStatesCache;
@@ -875,7 +874,7 @@ mergeArraysWithoutDuplicates(array1, array2) {
       console.log('[Admin Thread] 🔄 Mise à jour des états des tags');
       
       // Sauvegarder dans le storage
-      await storage.set(STORAGE_KEYS.TAG_STATES, newTagStates);
+      await browser.storage.local.set({ tagStates: newTagStates });
       
       // Mettre à jour l'état local
       this.tagStates = { ...newTagStates };
@@ -1055,18 +1054,12 @@ mergeArraysWithoutDuplicates(array1, array2) {
   async addToList(listType, type, value) {
     try {
       const storageKey = `${type}${listType.charAt(0).toUpperCase() + listType.slice(1)}`;
-      const mapKey = {
-        'emailWhitelist': STORAGE_KEYS.EMAIL_WHITELIST,
-        'emailBlacklist': STORAGE_KEYS.EMAIL_BLACKLIST,
-        'domainWhitelist': STORAGE_KEYS.DOMAIN_WHITELIST,
-        'domainBlacklist': STORAGE_KEYS.DOMAIN_BLACKLIST
-      }[storageKey];
-      
-      const currentList = await storage.get(mapKey, []);
+      const stored = await browser.storage.local.get([storageKey]);
+      const currentList = stored[storageKey] || [];
       
       if (!currentList.includes(value)) {
         currentList.push(value);
-        await storage.set(mapKey, currentList);
+        await browser.storage.local.set({ [storageKey]: currentList });
         
         console.log(`[Admin Thread] ✅ Ajouté à ${storageKey}: ${value}`);
         return { success: true, added: value, listSize: currentList.length };
@@ -1083,19 +1076,13 @@ mergeArraysWithoutDuplicates(array1, array2) {
   async removeFromList(listType, type, value) {
     try {
       const storageKey = `${type}${listType.charAt(0).toUpperCase() + listType.slice(1)}`;
-      const mapKey = {
-        'emailWhitelist': STORAGE_KEYS.EMAIL_WHITELIST,
-        'emailBlacklist': STORAGE_KEYS.EMAIL_BLACKLIST,
-        'domainWhitelist': STORAGE_KEYS.DOMAIN_WHITELIST,
-        'domainBlacklist': STORAGE_KEYS.DOMAIN_BLACKLIST
-      }[storageKey];
-      
-      const currentList = await storage.get(mapKey, []);
+      const stored = await browser.storage.local.get([storageKey]);
+      const currentList = stored[storageKey] || [];
       
       const index = currentList.indexOf(value);
       if (index > -1) {
         currentList.splice(index, 1);
-        await storage.set(mapKey, currentList);
+        await browser.storage.local.set({ [storageKey]: currentList });
         
         console.log(`[Admin Thread] ✅ Supprimé de ${storageKey}: ${value}`);
         return { success: true, removed: value, listSize: currentList.length };
@@ -1111,7 +1098,7 @@ mergeArraysWithoutDuplicates(array1, array2) {
 
   async updateConfig(newConfig) {
     try {
-      await storage.set('appConfig', newConfig);
+      await browser.storage.local.set(newConfig);
       
       if (newConfig.processingDelay) {
         this.processingConfig.processingDelay = newConfig.processingDelay;
@@ -1132,19 +1119,17 @@ mergeArraysWithoutDuplicates(array1, array2) {
   async getAllLists() {
     try {
       const keys = [
-        STORAGE_KEYS.EMAIL_WHITELIST,
-        STORAGE_KEYS.EMAIL_BLACKLIST,
-        STORAGE_KEYS.DOMAIN_WHITELIST,
-        STORAGE_KEYS.DOMAIN_BLACKLIST
+        'emailWhitelist', 'emailBlacklist',
+        'domainWhitelist', 'domainBlacklist'
       ];
       
-      const results = await Promise.all(keys.map(key => storage.get(key, [])));
+      const stored = await browser.storage.local.get(keys);
       
       const lists = {
-        emailWhitelist: results[0],
-        emailBlacklist: results[1],
-        domainWhitelist: results[2],
-        domainBlacklist: results[3]
+        emailWhitelist: stored.emailWhitelist || [],
+        emailBlacklist: stored.emailBlacklist || [],
+        domainWhitelist: stored.domainWhitelist || [],
+        domainBlacklist: stored.domainBlacklist || []
       };
       
       console.log(`[Admin Thread] 📋 Listes récupérées:`, {
