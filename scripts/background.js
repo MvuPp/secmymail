@@ -677,12 +677,151 @@ class BackgroundService {
       
       case 'toggleAddressBookSync':
         return await addressBookManager.toggleSync(data.enabled);
+
+      case 'importLists':
+        return await this.handleImportLists(data);
       
       default:
         console.warn(`[Admin Thread] Action inconnue: ${action}`);
         return { success: false, error: 'Action inconnue' };
     }
   }
+
+  /**
+ * Handler pour l'importation de listes
+ */
+async handleImportLists(data) {
+  try {
+    const { data: importData, merge = true } = data;
+    
+    console.log('[ServiceWorker] 📥 Import de listes (mode fusion: ' + merge + ')...');
+    
+    // Validation des données
+    if (!importData || typeof importData !== 'object') {
+      throw new Error('Données d\'import invalides');
+    }
+
+    const {
+      emailWhitelist = [],
+      emailBlacklist = [],
+      domainWhitelist = [],
+      domainBlacklist = []
+    } = importData;
+
+    // Validation des formats
+    if (!Array.isArray(emailWhitelist) || 
+        !Array.isArray(emailBlacklist) || 
+        !Array.isArray(domainWhitelist) || 
+        !Array.isArray(domainBlacklist)) {
+      throw new Error('Format de données incorrect');
+    }
+
+    let result;
+    
+    // Mode fusion ou remplacement selon l'option
+    if (merge) {
+      // Récupérer les listes existantes
+      const existingData = await browser.storage.local.get([
+        'emailWhitelist', 'emailBlacklist', 'domainWhitelist', 'domainBlacklist'
+      ]);
+      
+      // Fusionner les listes en éliminant les doublons
+      const mergedData = {
+        emailWhitelist: this.mergeArraysWithoutDuplicates(
+          existingData.emailWhitelist || [],
+          emailWhitelist
+        ),
+        emailBlacklist: this.mergeArraysWithoutDuplicates(
+          existingData.emailBlacklist || [],
+          emailBlacklist
+        ),
+        domainWhitelist: this.mergeArraysWithoutDuplicates(
+          existingData.domainWhitelist || [],
+          domainWhitelist
+        ),
+        domainBlacklist: this.mergeArraysWithoutDuplicates(
+          existingData.domainBlacklist || [],
+          domainBlacklist
+        )
+      };
+
+      // Sauvegarder les listes fusionnées
+      await browser.storage.local.set(mergedData);
+      
+      // Calculer le nombre d'éléments réellement ajoutés
+      const addedItems = {
+        emailWhitelist: mergedData.emailWhitelist.length - (existingData.emailWhitelist?.length || 0),
+        emailBlacklist: mergedData.emailBlacklist.length - (existingData.emailBlacklist?.length || 0),
+        domainWhitelist: mergedData.domainWhitelist.length - (existingData.domainWhitelist?.length || 0),
+        domainBlacklist: mergedData.domainBlacklist.length - (existingData.domainBlacklist?.length || 0)
+      };
+      
+      const totalAdded = addedItems.emailWhitelist + addedItems.emailBlacklist + 
+                         addedItems.domainWhitelist + addedItems.domainBlacklist;
+      
+      result = {
+        success: true,
+        message: `${totalAdded} nouveaux éléments importés avec succès`,
+        imported: {
+          total: totalAdded,
+          added: addedItems,
+          current: {
+            emailWhitelist: mergedData.emailWhitelist.length,
+            emailBlacklist: mergedData.emailBlacklist.length,
+            domainWhitelist: mergedData.domainWhitelist.length,
+            domainBlacklist: mergedData.domainBlacklist.length
+          }
+        }
+      };
+    } else {
+      // Mode remplacement - sauvegarder directement les nouvelles données
+      const importedData = {
+        emailWhitelist,
+        emailBlacklist,
+        domainWhitelist,
+        domainBlacklist
+      };
+      
+      await browser.storage.local.set(importedData);
+      
+      const totalItems = emailWhitelist.length + emailBlacklist.length + 
+                       domainWhitelist.length + domainBlacklist.length;
+      
+      result = {
+        success: true,
+        message: `${totalItems} éléments importés avec succès (listes remplacées)`,
+        imported: {
+          total: totalItems,
+          current: {
+            emailWhitelist: emailWhitelist.length,
+            emailBlacklist: emailBlacklist.length,
+            domainWhitelist: domainWhitelist.length,
+            domainBlacklist: domainBlacklist.length
+          }
+        }
+      };
+    }
+    
+    console.log('[ServiceWorker] ✅ Import terminé:', result);
+    return result;
+
+  } catch (error) {
+    console.error('[ServiceWorker] ❌ Erreur import:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Fusionne deux tableaux sans doublons
+ */
+mergeArraysWithoutDuplicates(array1, array2) {
+  // Utiliser un Set pour éliminer automatiquement les doublons
+  const mergedSet = new Set([...array1, ...array2]);
+  return Array.from(mergedSet);
+}
 
   /**
    * Récupère les dossiers disponibles
