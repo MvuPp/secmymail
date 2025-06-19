@@ -1,6 +1,7 @@
 # SecMyMail
 
 ## Table des matières
+
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Première utilisation](#première-utilisation)
@@ -12,24 +13,48 @@
 ---
 
 ## Introduction
+
 **SecMyMail** est une extension pour le client de messagerie **Thunderbird**, développée en **JavaScript**. Son objectif principal est d’identifier et de classer les e-mails potentiellement suspects en fonction de leur origine, des liens qu’ils contiennent ou des fichiers joints. 
 
 ---
 
 ## Installation
 
-Téléchargez la dernière version depuis la [page des releases](https://github.com/MvuPp/secmymail/-/releases) :
+1. Téléchargez la dernière release depuis la [page des releases](https://github.com/MvuPp/secmymail/-/releases)
+2. Allez dans `Add-ons et thèmes` dans les paramètres de Thunderbird.
+3. Glissez y le fichier `secmymail.xpi`.
+
+## Compilation
+
+1. Clonez le dépôt :
+
+   ```bash
+   git clone https://github.com/MvuPp/secmymail
+   cd secmymail
+   ```
+
+2. Exécutez le script de compilation :
+
+   ```bash
+   ./build.sh
+   ```
+
+3. Le fichier `secmymail.xpi` sera généré dans le répertoire `build`.
+
+## Debug
 
 1. Ouvrez Thunderbird.
 2. Accédez à l’onglet des **modules complémentaires** dans les paramètres.
 3. Cliquez sur **Déboguer des modules**.
-4. Ajoutez un nouveau module en sélectionnant le fichier `build.sh`.
+4. Ajoutez un nouveau module en sélectionnant le fichier `manifest.json`.
 5. L’extension est maintenant installée et prête à l’emploi.
 
 ---
 
 ## Première utilisation
+
 Une fois l’extension activée :
+
 - Un nouveau bouton apparaît sur la barre d’outils de Thunderbird.
 - Cliquez dessus pour accéder à l’interface d’accueil de SecMyMail.
 - Explorez les différents menus pour configurer l’extension selon vos besoins.
@@ -44,60 +69,71 @@ Une fois l’extension activée :
 
 - SecMyMail vérifie l'extension des fichiers joints et les compare à une liste d'extensions de fichiers dangereuses. Si la pièce jointe est dangereuse, l'email est marqué comme dangereux.
 
-
 ### Carnet d’adresses et Whitelist
+
 - Permet d’ajouter des noms de domaine ou des adresses e-mail considérées comme fiables.
 
-#### Ajouter une donnée :
+#### Ajouter une donnée à la whitelist
+
 1. Sélectionnez le type (e-mail ou domaine).
 2. Cliquez sur **Ajouter**.
 3. Saisissez la valeur dans le champ de texte.
 4. Appuyez sur **Entrée** pour valider.
 
-#### Supprimer une donnée :
+#### Supprimer une donnée de la whitelist
+
 - Passez la souris sur une entrée existante et cliquez sur la croix rouge.
 
 ---
 
 ### Liste noire et Blacklist
+
 - Permet d’ajouter des noms de domaine ou des adresses e-mail considérées comme dangereuses.
 
-#### Ajouter une donnée :
+#### Ajouter une donnée
+
 1. Sélectionnez le type (e-mail ou domaine).
 2. Cliquez sur **Ajouter**.
 3. Saisissez la valeur dans le champ de texte.
 4. Appuyez sur **Entrée** pour valider.
 
-#### Supprimer une donnée :
+#### Supprimer une donnée
+
 - Passez la souris sur une entrée existante et cliquez sur la croix rouge.
 
 ---
 
 ### Gestion des tags
+
 - Activez ou désactivez les tags pour les fichiers, les mails et les domaines.
 - Déplacez automatiquement les mails dans des dossiers spécifiques pour un meilleur rangement.
 - Personnalisez la couleur des tags pour une gestion simplifiée.
 
-#### Activer/Désactiver un tag :
+#### Activer/Désactiver un tag
+
 1. Cliquez sur le bouton correspondant au tag.
 2. Le bouton devient vert si le tag est activé, rouge s’il est désactivé.
 
-#### Activer le déplacement automatique des mails :
+#### Activer le déplacement automatique des mails
+
 1. Cliquez sur le bouton près de **Déplacement des mails**.
 2. Vert = Activé, Rouge = Désactivé.
 
-#### Changer la couleur des tags :
+#### Changer la couleur des tags
+
 1. Allez dans **Gestion des tags** > **Changer les couleurs**.
 2. Sélectionnez la couleur à modifier et choisissez une nouvelle couleur.
 
 ---
 
 ## Notes
+
 - N'hésitez pas à consulter l'interface utilisateur pour explorer d'autres options disponibles.
 
 ---
 
 ## Support
+
 Pour toute assistance, contactez https://github.com/MvuPp/secmymail/issues.
 
 ## Auteurs
@@ -106,3 +142,4 @@ Pour toute assistance, contactez https://github.com/MvuPp/secmymail/issues.
 - [**Schell Yanis**]
 - [**Gauffeny Paul**]
 - [**Desbrousses Victor**]
+- [**Tucat Mathieu**]
