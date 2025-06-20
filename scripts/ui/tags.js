@@ -22,7 +22,6 @@ class TagsUI {
       await this.loadTagStatesFromBackground();
       await this.loadQuarantineOptions();
       await this.loadAvailableFolders();
-      await this.loadQuarantineStats();
       await this.loadAddressBookState();
       this.renderTags();
       this.renderQuarantineOptions();
@@ -89,28 +88,6 @@ class TagsUI {
     } catch (error) {
       console.error('[TagsUI] Erreur chargement dossiers:', error);
       this.availableFolders = [];
-    }
-  }
-
-  /**
-   * Charge les statistiques
-   */
-  async loadQuarantineStats() {
-    try {
-      const response = await browser.runtime.sendMessage({
-        action: 'getQuarantineStats'
-      });
-      
-      if (response && response.success) {
-        this.quarantineStats = response.data;
-        console.log('[TagsUI] Statistiques de quarantaine chargées:', this.quarantineStats);
-      } else {
-        this.quarantineStats = { totalQuarantined: 0 };
-        console.warn('[TagsUI] Statistiques non disponibles:', response?.error);
-      }
-    } catch (error) {
-      console.error('[TagsUI] Erreur chargement stats:', error);
-      this.quarantineStats = { totalQuarantined: 0 };
     }
   }
 
@@ -200,12 +177,6 @@ class TagsUI {
       const fichiersCheck = document.getElementById('quarantine-fichiers');
       if (fichiersCheck) {
         fichiersCheck.checked = this.quarantineOptions.quarantineFichiersMalveillants !== false;
-      }
-
-      // Statistiques
-      const totalMoved = document.getElementById('total-moved');
-      if (totalMoved) {
-        totalMoved.textContent = this.quarantineStats.totalQuarantined || 0;
       }
 
       // Mise à jour de la visibilité
@@ -685,20 +656,23 @@ class TagsUI {
   renderCategoryTags(containerId, tagKeys) {
     const container = document.getElementById(containerId);
     if (!container) return;
-
+  
     container.innerHTML = tagKeys.map(tagKey => {
       const tagState = this.tagStates[tagKey];
       if (!tagState) return '';
-
+  
+      // Utiliser le label du tagState ou générer un label par défaut
+      const label = tagState.label || this.getDefaultLabel(tagKey);
+  
       return `
         <div class="tag-item" data-tag="${tagKey}">
           <button class="color-picker-btn" 
                   data-tag="${tagKey}"
-                  style="background-color: ${tagState.color}"
+                  style="background-color: ${tagState.color || '#666666'}"
                   title="Choisir la couleur du tag">
             <span class="color-dot"></span>
           </button>
-          <span class="tag-name">${tagState.label}</span>
+          <span class="tag-name">${label}</span>
           <label class="toggle-switch">
             <input type="checkbox" 
                    class="tag-toggle" 
@@ -709,6 +683,25 @@ class TagsUI {
         </div>
       `;
     }).join('');
+  }
+  
+  /**
+   * Génère un label par défaut basé sur la clé du tag
+   */
+  getDefaultLabel(tagKey) {
+    const labelMap = {
+      'secmymail.expediteur_malveillant': 'Expéditeur Malveillant',
+      'secmymail.expediteur_suspect': 'Expéditeur Suspect',
+      'secmymail.expediteur_sur': 'Expéditeur Sûr',
+      'secmymail.lien_malveillant': 'Lien Malveillant',
+      'secmymail.lien_suspect': 'Lien Suspect',
+      'secmymail.lien_sur': 'Lien Sûr',
+      'secmymail.fichier_malveillant': 'Fichier Malveillant',
+      'secmymail.fichier_suspect': 'Fichier Suspect',
+      'secmymail.fichier_sur': 'Fichier Sûr'
+    };
+    
+    return labelMap[tagKey] || tagKey.replace('secmymail.', '').replace(/_/g, ' ');
   }
 
   updateSaveButton() {
