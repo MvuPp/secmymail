@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecMyMail - Gestion des listes</title>
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/lists.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <button class="back-button" id="back-btn">←</button>
+            <h1>Gestion des listes</h1>
+        </header>
+
+        <main class="main-content">
+            <!-- Navigation principale entre types de listes -->
+            <div class="list-type-selector">
+                <button class="list-type-button active" data-type="whitelist">
+                    <div class="button-icon">✅</div>
+                    <div class="button-text">
+                        <h3>Liste blanche</h3>
+                        <p>Emails et domaines autorisés</p>
+                    </div>
+                </button>
+                <button class="list-type-button" data-type="blacklist">
+                    <div class="button-icon">❌</div>
+                    <div class="button-text">
+                        <h3>Liste noire</h3>
+                        <p>Emails et domaines bloqués</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Onglets pour emails/domaines -->
+            <div class="tabs" id="tabs-container">
+                <button class="tab-button active" data-tab="emails">
+                    <span class="tab-icon">📧</span>
+                    Adresses emails
+                </button>
+                <button class="tab-button" data-tab="domains">
+                    <span class="tab-icon">🌐</span>
+                    Domaines
+                </button>
+            </div>
+
+            <!-- Contenu des onglets -->
+            <div id="tab-content">
+                <!-- Section Email Whitelist -->
+                <div class="tab-panel active" id="emails-whitelist">
+                    <div class="list-section">
+                        <h3>📧 Adresses emails autorisées</h3>
+                        <div class="input-group">
+                            <input type="email" 
+                                   class="list-input" 
+                                   id="email-whitelist-input" 
+                                   placeholder="Entrez une adresse email (ex: contact@example.com)">
+                            <button class="btn btn-primary" id="add-email-whitelist">
+                                Ajouter
+                            </button>
+                        </div>
+                        
+                        <div class="list-container" id="email-whitelist-container">
+                            <div class="empty-list" id="email-whitelist-empty">
+                                Aucune adresse email dans la liste blanche
+                            </div>
+                            <div class="list-items" id="email-whitelist-items" style="display: none;">
+                                <!-- Items générés dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Domain Whitelist -->
+                <div class="tab-panel" id="domains-whitelist" style="display: none;">
+                    <div class="list-section">
+                        <h3>🌐 Domaines autorisés</h3>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="list-input" 
+                                   id="domain-whitelist-input" 
+                                   placeholder="Entrez un domaine (ex: example.com)">
+                            <button class="btn btn-primary" id="add-domain-whitelist">
+                                Ajouter
+                            </button>
+                        </div>
+                        
+                        <div class="list-container" id="domain-whitelist-container">
+                            <div class="empty-list" id="domain-whitelist-empty">
+                                Aucun domaine dans la liste blanche
+                            </div>
+                            <div class="list-items" id="domain-whitelist-items" style="display: none;">
+                                <!-- Items générés dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Email Blacklist -->
+                <div class="tab-panel" id="emails-blacklist" style="display: none;">
+                    <div class="list-section">
+                        <h3>📧 Adresses emails bloquées</h3>
+                        <div class="input-group">
+                            <input type="email" 
+                                   class="list-input" 
+                                   id="email-blacklist-input" 
+                                   placeholder="Entrez une adresse email (ex: spam@example.com)">
+                            <button class="btn btn-danger" id="add-email-blacklist">
+                                Bloquer
+                            </button>
+                        </div>
+                        
+                        <div class="list-container" id="email-blacklist-container">
+                            <div class="empty-list" id="email-blacklist-empty">
+                                Aucune adresse email dans la liste noire
+                            </div>
+                            <div class="list-items" id="email-blacklist-items" style="display: none;">
+                                <!-- Items générés dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Domain Blacklist -->
+                <div class="tab-panel" id="domains-blacklist" style="display: none;">
+                    <div class="list-section">
+                        <h3>🌐 Domaines bloqués</h3>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="list-input" 
+                                   id="domain-blacklist-input" 
+                                   placeholder="Entrez un domaine (ex: spam-domain.com)">
+                            <button class="btn btn-danger" id="add-domain-blacklist">
+                                Bloquer
+                            </button>
+                        </div>
+                        
+                        <div class="list-container" id="domain-blacklist-container">
+                            <div class="empty-list" id="domain-blacklist-empty">
+                                Aucun domaine dans la liste noire
+                            </div>
+                            <div class="list-items" id="domain-blacklist-items" style="display: none;">
+                                <!-- Items générés dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions globales -->
+            <div class="global-actions">
+                <button class="btn btn-secondary" id="export-lists">
+                    📤 Exporter les listes
+                </button>
+                <button class="btn btn-secondary" id="import-lists">
+                    📥 Importer des listes
+                </button>
+                <button class="btn btn-danger" id="clear-current-list">
+                    🗑️ Vider la liste courante
+                </button>
+            </div>
+
+            <!-- Section d'aide -->
+            <div class="help-section">
+                <h3>💡 Aide</h3>
+                <div class="help-content">
+                    <p><strong>Liste blanche :</strong> Les emails/domaines dans cette liste seront toujours considérés comme sûrs et ne seront jamais bloqués.</p>
+                    <p><strong>Liste noire :</strong> Les emails/domaines dans cette liste seront automatiquement marqués comme suspects ou bloqués.</p>
+                    <p><strong>Priorité :</strong> La liste noire a priorité sur la liste blanche pour éviter les contournements de sécurité.</p>
+                    <p><strong>Domaines :</strong> Ajouter un domaine (ex: "example.com") affectera tous les emails de ce domaine.</p>
+                    <p><strong>Formats acceptés :</strong> 
+                        <br>• Emails: user@domain.com
+                        <br>• Domaines: domain.com (sans www ou protocole)
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+    <script type="module" src="../scripts/ui/lists.js"></script>
+</body>
+</html>
