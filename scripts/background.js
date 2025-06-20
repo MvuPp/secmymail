@@ -1,8 +1,3 @@
-/**
- * Service Worker Background - SecMyMail Extension for Thunderbird
- * Version avec multithreading simulé - Threading natif compatible
- */
-
 import { messageAnalyzer } from '../modules/analysis/message.js';
 import { tagManager } from '../modules/core/tags.js';
 import { autoMoveManager } from '../modules/core/autoMove.js';
@@ -52,7 +47,6 @@ class TaskManager {
         const task = this.mailTasks.shift();
         await this.executeMailTask(task);
         
-        // Yield control périodiquement
         if (this.mailTasks.length % 3 === 0) {
           await new Promise(resolve => setTimeout(resolve, 10));
         }
@@ -170,7 +164,7 @@ class BackgroundService {
     // Cache des états des tags pour éviter les lectures répétées
     this.tagStatesCache = null;
     this.tagStatesCacheExpiry = 0;
-    this.CACHE_DURATION = 30000; // 30 secondes
+    this.CACHE_DURATION = 30000;
     
     console.log('[SecMyMail] BackgroundService créé avec TaskManager');
     writeLog('info', 'background.js', 'BackgroundService créé avec TaskManager');
@@ -865,7 +859,6 @@ class BackgroundService {
         } catch (tagError) {
           console.error(`[Admin Thread] ❌ Erreur traitement tag ${tagKey}:`, tagError);
           writeLog('error', 'background.js', `Erreur lors du traitement du tag ${tagKey}: ${tagError.message}`);
-          // Continuer avec les autres tags malgré l'erreur
         }
       }
       

@@ -476,7 +476,7 @@ class TagsUI {
       
       const response = await browser.runtime.sendMessage({
         action: 'updateQuarantineOptions',
-        options: this.quarantineOptions // Corriger la clé en "options" au lieu de "data"
+        options: this.quarantineOptions
       });
       
       if (response && response.success) {

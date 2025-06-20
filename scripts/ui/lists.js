@@ -854,7 +854,6 @@ class ListsUI {
       noBtn.onclick = () => handleClick(false);
       modal.onclick = (e) => { if (e.target === modal) handleClick(false); };
       
-      // Hover effects
       yesBtn.onmouseover = () => yesBtn.style.backgroundColor = '#c82333';
       yesBtn.onmouseout = () => yesBtn.style.backgroundColor = '#dc3545';
       noBtn.onmouseover = () => noBtn.style.backgroundColor = '#5a6268';

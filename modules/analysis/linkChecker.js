@@ -230,7 +230,7 @@ class LinkChecker {
                     links.add(url);
                     domains.add(url.hostname.toLowerCase());
                 } catch (error) {
-                    // URL invalide, ignorer
+                    // URL invalide = ignorer
                 }
             }
         }
@@ -368,8 +368,6 @@ class LinkChecker {
             analysis.reasons.push('Domaine dans la liste blanche personnalisée');
             return;
         }
-        
-        // Continuer avec les vérifications par défaut...
     }
 
     /**
