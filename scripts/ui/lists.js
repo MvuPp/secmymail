@@ -722,7 +722,7 @@ class ListsUI {
   }
 
   /**
-   * Importer des listes depuis un fichier JSON
+   * Importer des listes depuis du texte JSON collé
    */
   importLists() {
     const input = document.getElementById('import-file-input');
@@ -732,68 +732,206 @@ class ListsUI {
       return;
     }
     
-    input.click();
-
-    input.onchange = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
+    modal.innerHTML = `
+      <div class="import-dialog" style="
+        background: var(--surface-color, #2a2a2a);
+        color: var(--text-color, white);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border-color, #444);
+        overflow: hidden;
+      ">
+        <h2 style="margin-top: 0; margin-bottom: 15px; font-size: 18px; color: var(--text-color, white);">
+          Importer des listes
+        </h2>
+        
+        <div style="flex: 1; overflow: hidden;">
+          <p style="margin-top: 0; margin-bottom: 10px; font-size: 13px; color: var(--text-muted, #ccc);">
+            Collez le contenu JSON de vos listes:
+          </p>
+          
+          <textarea id="import-text" style="
+            width: 100%;
+            height: 200px;
+            background: var(--input-bg, #222);
+            color: var(--text-color, white);
+            border: 1px solid var(--border-color, #444);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 13px;
+            resize: vertical;
+            margin-bottom: 15px;
+            white-space: pre;
+            overflow: auto;
+          " placeholder='{"emailWhitelist": ["example@domain.com"], "emailBlacklist": [], ...}'></textarea>
+          
+          <div style="font-size: 12px; color: var(--text-muted, #aaa); margin-bottom: 15px;">
+            <p style="margin: 0 0 8px 0;">Format attendu:</p>
+            <pre style="
+              background: var(--code-bg, #1a1a1a);
+              padding: 10px;
+              border-radius: 4px;
+              overflow: auto;
+              margin: 0;
+            ">{
+    "emailWhitelist": ["email1@domain.com", "email2@domain.com"],
+    "emailBlacklist": ["spam@domain.com"],
+    "domainWhitelist": ["trusted-domain.com"],
+    "domainBlacklist": ["spam-domain.com"]
+  }</pre>
+          </div>
+        </div>
+        
+        <div style="
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          margin-top: 20px;
+          border-top: 1px solid var(--border-color, #444);
+          padding-top: 20px;
+        ">
+          <div>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-muted, #ccc);">
+              <input type="checkbox" id="merge-option" checked style="margin: 0;">
+              Fusionner avec les listes existantes
+            </label>
+          </div>
+          
+          <div style="display: flex; gap: 10px;">
+            <button id="cancel-import" style="
+              background: var(--secondary-color, #6c757d);
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 14px;
+            ">Annuler</button>
+            
+            <button id="confirm-import" style="
+              background: var(--success-color, #28a745);
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 14px;
+              font-weight: 500;
+            ">Importer</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Références aux éléments
+    const importText = modal.querySelector('#import-text');
+    const mergeOption = modal.querySelector('#merge-option');
+    const cancelImport = modal.querySelector('#cancel-import');
+    const confirmImport = modal.querySelector('#confirm-import');
+    
+    // Fermer la modal
+    cancelImport.addEventListener('click', () => {
+      document.body.removeChild(modal);
+    });
+    
+    // Traiter l'importation
+    confirmImport.addEventListener('click', async () => {
       try {
-        const text = await file.text();
-        const data = JSON.parse(text);
-
-        if (!this.validateImportData(data)) {
-          this.showError('Format de fichier invalide ou données corrompues');
+        // Obtenir le texte JSON
+        const text = importText.value.trim();
+        if (!text) {
+          this.showError('Veuillez coller du texte JSON valide');
           return;
         }
-
-        const totalItems = (data.emailWhitelist?.length || 0) + 
-                          (data.emailBlacklist?.length || 0) + 
-                          (data.domainWhitelist?.length || 0) + 
-                          (data.domainBlacklist?.length || 0);
-
+        
+        // Parser le JSON
+        const jsonData = JSON.parse(text);
+        
+        // Valider les données
+        if (!this.validateImportData(jsonData)) {
+          this.showError('Format de données JSON invalide. Vérifiez que le fichier contient bien les listes requises.');
+          return;
+        }
+        
+        // Compter les éléments à importer
+        const totalItems = (jsonData.emailWhitelist?.length || 0) + 
+                          (jsonData.emailBlacklist?.length || 0) + 
+                          (jsonData.domainWhitelist?.length || 0) + 
+                          (jsonData.domainBlacklist?.length || 0);
+        
+        if (totalItems === 0) {
+          this.showError('Aucun élément à importer dans les données');
+          return;
+        }
+        
+        // Fermer la modal
+        document.body.removeChild(modal);
+        
+        // Demander confirmation
         const confirmed = await this.showConfirmDialog(
-          `Importer ${totalItems} élément(s) ?\n\nCela remplacera toutes les listes actuelles.\n\nCette action ne peut pas être annulée.`
+          `Importer ${totalItems} élément(s) depuis le texte collé ?\n\n` +
+          `${mergeOption.checked ? 'Les éléments seront fusionnés avec vos listes existantes (les doublons seront ignorés).' : 'ATTENTION: Cela remplacera toutes vos listes actuelles.'}`
         );
         
         if (!confirmed) return;
-
-        // Sauvegarder directement dans le storage
-        const importData = {
-          emailWhitelist: data.emailWhitelist || [],
-          emailBlacklist: data.emailBlacklist || [],
-          domainWhitelist: data.domainWhitelist || [],
-          domainBlacklist: data.domainBlacklist || []
-        };
-
-        // Utiliser le StorageManager si disponible, sinon utiliser browser.storage.local
-        if (storage) {
-          await storage.set(STORAGE_KEYS.EMAIL_WHITELIST, importData.emailWhitelist);
-          await storage.set(STORAGE_KEYS.EMAIL_BLACKLIST, importData.emailBlacklist);
-          await storage.set(STORAGE_KEYS.DOMAIN_WHITELIST, importData.domainWhitelist);
-          await storage.set(STORAGE_KEYS.DOMAIN_BLACKLIST, importData.domainBlacklist);
-        } else {
-          await browser.storage.local.set(importData);
-        }
-
-        // Recharger les données et mettre à jour l'interface
-        await this.loadData();
-        this.updateInterface();
         
-        this.showSuccess(`${totalItems} élément(s) importé(s) avec succès`);
-
+        // Préparer les données pour l'importation
+        const importData = {
+          emailWhitelist: jsonData.emailWhitelist || [],
+          emailBlacklist: jsonData.emailBlacklist || [],
+          domainWhitelist: jsonData.domainWhitelist || [],
+          domainBlacklist: jsonData.domainBlacklist || []
+        };
+        
+        // Envoyer au service worker pour traitement
+        const response = await browser.runtime.sendMessage({
+          action: 'importLists',
+          data: importData,
+          merge: mergeOption.checked
+        });
+        
+        if (response && response.success) {
+          // Recharger les données et mettre à jour l'interface
+          await this.loadData();
+          this.updateInterface();
+          
+          this.showSuccess(response.message || `${totalItems} élément(s) importé(s) avec succès`);
+        } else {
+          throw new Error(response?.error || 'Erreur inconnue lors de l\'importation');
+        }
+        
       } catch (error) {
         console.error('[ListsUI] Erreur import:', error);
         if (error instanceof SyntaxError) {
-          this.showError('Fichier JSON invalide');
+          this.showError('Format JSON invalide. Vérifiez la syntaxe du contenu.');
         } else {
-          this.showError('Erreur lors de l\'import du fichier');
+          this.showError(`Erreur: ${error.message}`);
         }
       }
-
-      // Nettoyer l'input
-      event.target.value = '';
-    };
+    });
+    
+    // Ajoutez la fonction de validation si elle n'existe pas
+    if (!this.validateImportData) {
+      this.validateImportData = function(data) {
+        if (!data || typeof data !== 'object') return false;
+        
+        // Vérifier que toutes les propriétés requises existent et sont des tableaux
+        const requiredArrayProps = ['emailWhitelist', 'emailBlacklist', 'domainWhitelist', 'domainBlacklist'];
+        
+        return requiredArrayProps.every(prop => 
+          data[prop] === undefined || Array.isArray(data[prop])
+        );
+      };
+    }
   }
 
   /**

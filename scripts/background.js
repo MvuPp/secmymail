@@ -186,10 +186,10 @@ class BackgroundService {
     }
     
     try {
-      const result = await storage.get(STORAGE_KEYS.TAG_STATES);
+      const result = await browser.storage.local.get(['tagStates']);
       
-      if (result) {
-        this.tagStatesCache = result;
+      if (result.tagStates) {
+        this.tagStatesCache = result.tagStates;
         this.tagStatesCacheExpiry = now + this.CACHE_DURATION;
         console.log('[SecMyMail] 📊 États des tags mis en cache');
         writeLog('info', 'background.js', 'États des tags récupérés depuis le storage et mis en cache');
@@ -718,12 +718,151 @@ class BackgroundService {
       
       case 'toggleAddressBookSync':
         return await addressBookManager.toggleSync(data.enabled);
+
+      case 'importLists':
+        return await this.handleImportLists(data);
       
       default:
         console.warn(`[Admin Thread] Action inconnue: ${action}`);
         return { success: false, error: 'Action inconnue' };
     }
   }
+
+  /**
+ * Handler pour l'importation de listes
+ */
+async handleImportLists(data) {
+  try {
+    const { data: importData, merge = true } = data;
+    
+    console.log('[ServiceWorker] 📥 Import de listes (mode fusion: ' + merge + ')...');
+    
+    // Validation des données
+    if (!importData || typeof importData !== 'object') {
+      throw new Error('Données d\'import invalides');
+    }
+
+    const {
+      emailWhitelist = [],
+      emailBlacklist = [],
+      domainWhitelist = [],
+      domainBlacklist = []
+    } = importData;
+
+    // Validation des formats
+    if (!Array.isArray(emailWhitelist) || 
+        !Array.isArray(emailBlacklist) || 
+        !Array.isArray(domainWhitelist) || 
+        !Array.isArray(domainBlacklist)) {
+      throw new Error('Format de données incorrect');
+    }
+
+    let result;
+    
+    // Mode fusion ou remplacement selon l'option
+    if (merge) {
+      // Récupérer les listes existantes
+      const existingData = await browser.storage.local.get([
+        'emailWhitelist', 'emailBlacklist', 'domainWhitelist', 'domainBlacklist'
+      ]);
+      
+      // Fusionner les listes en éliminant les doublons
+      const mergedData = {
+        emailWhitelist: this.mergeArraysWithoutDuplicates(
+          existingData.emailWhitelist || [],
+          emailWhitelist
+        ),
+        emailBlacklist: this.mergeArraysWithoutDuplicates(
+          existingData.emailBlacklist || [],
+          emailBlacklist
+        ),
+        domainWhitelist: this.mergeArraysWithoutDuplicates(
+          existingData.domainWhitelist || [],
+          domainWhitelist
+        ),
+        domainBlacklist: this.mergeArraysWithoutDuplicates(
+          existingData.domainBlacklist || [],
+          domainBlacklist
+        )
+      };
+
+      // Sauvegarder les listes fusionnées
+      await browser.storage.local.set(mergedData);
+      
+      // Calculer le nombre d'éléments réellement ajoutés
+      const addedItems = {
+        emailWhitelist: mergedData.emailWhitelist.length - (existingData.emailWhitelist?.length || 0),
+        emailBlacklist: mergedData.emailBlacklist.length - (existingData.emailBlacklist?.length || 0),
+        domainWhitelist: mergedData.domainWhitelist.length - (existingData.domainWhitelist?.length || 0),
+        domainBlacklist: mergedData.domainBlacklist.length - (existingData.domainBlacklist?.length || 0)
+      };
+      
+      const totalAdded = addedItems.emailWhitelist + addedItems.emailBlacklist + 
+                         addedItems.domainWhitelist + addedItems.domainBlacklist;
+      
+      result = {
+        success: true,
+        message: `${totalAdded} nouveaux éléments importés avec succès`,
+        imported: {
+          total: totalAdded,
+          added: addedItems,
+          current: {
+            emailWhitelist: mergedData.emailWhitelist.length,
+            emailBlacklist: mergedData.emailBlacklist.length,
+            domainWhitelist: mergedData.domainWhitelist.length,
+            domainBlacklist: mergedData.domainBlacklist.length
+          }
+        }
+      };
+    } else {
+      // Mode remplacement - sauvegarder directement les nouvelles données
+      const importedData = {
+        emailWhitelist,
+        emailBlacklist,
+        domainWhitelist,
+        domainBlacklist
+      };
+      
+      await browser.storage.local.set(importedData);
+      
+      const totalItems = emailWhitelist.length + emailBlacklist.length + 
+                       domainWhitelist.length + domainBlacklist.length;
+      
+      result = {
+        success: true,
+        message: `${totalItems} éléments importés avec succès (listes remplacées)`,
+        imported: {
+          total: totalItems,
+          current: {
+            emailWhitelist: emailWhitelist.length,
+            emailBlacklist: emailBlacklist.length,
+            domainWhitelist: domainWhitelist.length,
+            domainBlacklist: domainBlacklist.length
+          }
+        }
+      };
+    }
+    
+    console.log('[ServiceWorker] ✅ Import terminé:', result);
+    return result;
+
+  } catch (error) {
+    console.error('[ServiceWorker] ❌ Erreur import:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Fusionne deux tableaux sans doublons
+ */
+mergeArraysWithoutDuplicates(array1, array2) {
+  // Utiliser un Set pour éliminer automatiquement les doublons
+  const mergedSet = new Set([...array1, ...array2]);
+  return Array.from(mergedSet);
+}
 
   /**
    * Récupère les dossiers disponibles
@@ -783,7 +922,7 @@ class BackgroundService {
       writeLog('info', 'background.js', 'Mise à jour des états des tags');
       
       // Sauvegarder dans le storage
-      await storage.set(STORAGE_KEYS.TAG_STATES, newTagStates);
+      await browser.storage.local.set({ tagStates: newTagStates });
       
       // Mettre à jour l'état local
       this.tagStates = { ...newTagStates };
@@ -979,18 +1118,12 @@ class BackgroundService {
   async addToList(listType, type, value) {
     try {
       const storageKey = `${type}${listType.charAt(0).toUpperCase() + listType.slice(1)}`;
-      const mapKey = {
-        'emailWhitelist': STORAGE_KEYS.EMAIL_WHITELIST,
-        'emailBlacklist': STORAGE_KEYS.EMAIL_BLACKLIST,
-        'domainWhitelist': STORAGE_KEYS.DOMAIN_WHITELIST,
-        'domainBlacklist': STORAGE_KEYS.DOMAIN_BLACKLIST
-      }[storageKey];
-      
-      const currentList = await storage.get(mapKey, []);
+      const stored = await browser.storage.local.get([storageKey]);
+      const currentList = stored[storageKey] || [];
       
       if (!currentList.includes(value)) {
         currentList.push(value);
-        await storage.set(mapKey, currentList);
+        await browser.storage.local.set({ [storageKey]: currentList });
         
         console.log(`[Admin Thread] ✅ Ajouté à ${storageKey}: ${value}`);
         writeLog('info', 'background.js', `Ajouté à ${storageKey}: ${value}`);
@@ -1009,19 +1142,13 @@ class BackgroundService {
   async removeFromList(listType, type, value) {
     try {
       const storageKey = `${type}${listType.charAt(0).toUpperCase() + listType.slice(1)}`;
-      const mapKey = {
-        'emailWhitelist': STORAGE_KEYS.EMAIL_WHITELIST,
-        'emailBlacklist': STORAGE_KEYS.EMAIL_BLACKLIST,
-        'domainWhitelist': STORAGE_KEYS.DOMAIN_WHITELIST,
-        'domainBlacklist': STORAGE_KEYS.DOMAIN_BLACKLIST
-      }[storageKey];
-      
-      const currentList = await storage.get(mapKey, []);
+      const stored = await browser.storage.local.get([storageKey]);
+      const currentList = stored[storageKey] || [];
       
       const index = currentList.indexOf(value);
       if (index > -1) {
         currentList.splice(index, 1);
-        await storage.set(mapKey, currentList);
+        await browser.storage.local.set({ [storageKey]: currentList });
         
         console.log(`[Admin Thread] ✅ Supprimé de ${storageKey}: ${value}`);
         writeLog('info', 'background.js', `Supprimé de ${storageKey}: ${value}`);
@@ -1039,7 +1166,7 @@ class BackgroundService {
 
   async updateConfig(newConfig) {
     try {
-      await storage.set('appConfig', newConfig);
+      await browser.storage.local.set(newConfig);
       
       if (newConfig.processingDelay) {
         this.processingConfig.processingDelay = newConfig.processingDelay;
@@ -1062,19 +1189,17 @@ class BackgroundService {
   async getAllLists() {
     try {
       const keys = [
-        STORAGE_KEYS.EMAIL_WHITELIST,
-        STORAGE_KEYS.EMAIL_BLACKLIST,
-        STORAGE_KEYS.DOMAIN_WHITELIST,
-        STORAGE_KEYS.DOMAIN_BLACKLIST
+        'emailWhitelist', 'emailBlacklist',
+        'domainWhitelist', 'domainBlacklist'
       ];
       
-      const results = await Promise.all(keys.map(key => storage.get(key, [])));
+      const stored = await browser.storage.local.get(keys);
       
       const lists = {
-        emailWhitelist: results[0],
-        emailBlacklist: results[1],
-        domainWhitelist: results[2],
-        domainBlacklist: results[3]
+        emailWhitelist: stored.emailWhitelist || [],
+        emailBlacklist: stored.emailBlacklist || [],
+        domainWhitelist: stored.domainWhitelist || [],
+        domainBlacklist: stored.domainBlacklist || []
       };
       
       console.log(`[Admin Thread] 📋 Listes récupérées:`, {
