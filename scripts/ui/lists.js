@@ -1,3 +1,4 @@
+import { writeLog } from '../../modules/core/logger.js';
 /**
  * Interface de gestion des listes blanches et noires - Adaptée au HTML existant
  */
@@ -14,6 +15,7 @@ let STORAGE_KEYS = null;
     STORAGE_KEYS = storageModule.STORAGE_KEYS;
   } catch (error) {
     console.warn('[ListsUI] Impossible d\'importer StorageManager, utilisation fallback');
+    writeLog('error', 'lists.js', 'Erreur lors de l\'import du StorageManager: ' + error.message);
   }
 })();
 class ListsUI {
@@ -37,8 +39,10 @@ class ListsUI {
       this.updateInterface();
       
       console.log('[ListsUI] ✅ Interface initialisée');
+      writeLog('info', 'lists.js', 'Interface de gestion des listes initialisée avec succès');
     } catch (error) {
       console.error('[ListsUI] Erreur initialisation:', error);
+      writeLog('error', 'lists.js', 'Erreur lors de l\'initialisation de l\'interface: ' + error.message);
       this.showError('Erreur lors de l\'initialisation');
     }
   }
@@ -66,12 +70,18 @@ class ListsUI {
           domainWhitelist: this.domainWhitelist.length,
           domainBlacklist: this.domainBlacklist.length
         });
+        writeLog('info', 'lists.js', `Données chargées: 
+          Email Whitelist: ${this.emailWhitelist.length}, 
+          Email Blacklist: ${this.emailBlacklist.length}, 
+          Domain Whitelist: ${this.domainWhitelist.length}, 
+          Domain Blacklist: ${this.domainBlacklist.length}`);
       } else {
         throw new Error('Impossible de charger les données depuis le service worker');
       }
 
     } catch (error) {
       console.error('[ListsUI] ❌ Erreur chargement:', error);
+      writeLog('error', 'lists.js', 'Erreur lors du chargement des données: ' + error.message);
       this.showError('Erreur lors du chargement des données');
       throw error;
     }
@@ -145,6 +155,7 @@ class ListsUI {
       });
     } else {
       console.error(`[ListsUI] Panneau non trouvé: ${panelId}`);
+      writeLog('error', 'lists.js', `Panneau non trouvé: ${panelId}`);
       this.isTransitioning = false;
     }
     
@@ -164,6 +175,7 @@ class ListsUI {
     const container = document.getElementById(containerId);
     if (!container) {
       console.error(`[ListsUI] Container non trouvé: ${containerId}`);
+      writeLog('error', 'lists.js', `Container non trouvé: ${containerId}`);
       return;
     }
 
@@ -176,6 +188,7 @@ class ListsUI {
     
     if (!emptyDiv || !itemsDiv) {
       console.error(`[ListsUI] Éléments non trouvés: ${emptyId} ou ${itemsId}`);
+      writeLog('error', 'lists.js', `Éléments non trouvés: ${emptyId} ou ${itemsId}`);
       return;
     }
 
@@ -278,6 +291,7 @@ class ListsUI {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         console.log('[ListsUI] Page visible, rafraîchissement...');
+        writeLog('info', 'lists.js', 'Page visible, rafraîchissement des données');
         setTimeout(() => this.forceRefresh(), 500);
       }
     });
@@ -356,6 +370,7 @@ class ListsUI {
    */
   handleListTypeChange(newListType) {
     console.log(`[ListsUI] 📊 Changement vers: ${newListType}`);
+    writeLog('info', 'lists.js', `Changement de type de liste vers: ${newListType}`);
     
     this.currentListType = newListType;
     this.updateInterface();
@@ -366,6 +381,7 @@ class ListsUI {
    */
   handleTabChange(newTab) {
     console.log(`[ListsUI] 📊 Changement d'onglet vers: ${newTab}`);
+    writeLog('info', 'lists.js', `Changement d'onglet vers: ${newTab}`);
     
     this.currentTab = newTab;
     this.updateInterface();
@@ -388,6 +404,7 @@ class ListsUI {
       
       if (!input) {
         console.error(`[ListsUI] Input non trouvé: ${inputId}`);
+        writeLog('error', 'lists.js', `Input non trouvé: ${inputId}`);
         this.showError('Erreur: input non trouvé');
         return;
       }
@@ -421,6 +438,7 @@ class ListsUI {
       }
 
       console.log(`[ListsUI] Ajout: ${value} à ${type}-${listType}`);
+      writeLog('info', 'lists.js', `Ajout de ${value} à ${type}-${listType}`);
       
       // Désactiver le bouton pendant l'ajout
       const button = document.getElementById(`add-${type}-${listType}`);
@@ -437,6 +455,7 @@ class ListsUI {
       
       if (response && response.success) {
         console.log(`[ListsUI] ✅ Ajouté avec succès`);
+        writeLog('info', 'lists.js', `Ajout réussi: ${value} à ${type}-${listType}`);
         
         // Recharger les données et mettre à jour l'interface
         await this.loadData();
@@ -454,6 +473,7 @@ class ListsUI {
       
     } catch (error) {
       console.error('[ListsUI] Erreur ajout:', error);
+      writeLog('error', 'lists.js', `Erreur lors de l'ajout: ${error.message}`);
       this.showError(`Erreur: ${error.message}`);
       this.showInputError(input);
     } finally {
@@ -487,6 +507,7 @@ class ListsUI {
 
       if (response && response.success) {
         console.log(`[ListsUI] ✅ Suppression réussie`);
+        writeLog('info', 'lists.js', `Suppression réussie: ${item} de la liste ${this.currentListType}`);
         
         // Recharger les données et mettre à jour l'interface
         await this.loadData();
@@ -495,10 +516,12 @@ class ListsUI {
         this.showSuccess(`"${item}" supprimé avec succès`);
       } else {
         console.error(`[ListsUI] ❌ Erreur suppression:`, response);
+        writeLog('error', 'lists.js', `Erreur lors de la suppression: ${response?.error || 'Erreur inconnue'}`);
         this.showError(response?.error || 'Erreur lors de la suppression');
       }
     } catch (error) {
       console.error('[ListsUI] Erreur suppression:', error);
+      writeLog('error', 'lists.js', `Erreur lors de la suppression: ${error.message}`);
       this.showError(`Erreur de communication: ${error.message}`);
     }
   }
@@ -515,8 +538,10 @@ class ListsUI {
       
       this.showSuccess('Interface mise à jour');
       console.log('[ListsUI] ✅ Rafraîchissement terminé');
+      writeLog('info', 'lists.js', 'Rafraîchissement forcé de l\'interface réussi');
     } catch (error) {
       console.error('[ListsUI] Erreur rafraîchissement:', error);
+      writeLog('error', 'lists.js', 'Erreur lors du rafraîchissement de l\'interface: ' + error.message);
       this.showError('Erreur lors du rafraîchissement');
     }
   }
@@ -558,8 +583,10 @@ class ListsUI {
           if (response && response.success) {
             removedCount++;
           }
+          writeLog('info', 'lists.js', `Suppression de ${item} réussie`);
         } catch (error) {
           console.error(`[ListsUI] Erreur suppression ${item}:`, error);
+          writeLog('error', 'lists.js', `Erreur lors de la suppression de ${item}: ${error.message}`);
         }
       }
 
@@ -570,6 +597,7 @@ class ListsUI {
       this.showSuccess(`Liste vidée : ${removedCount} élément(s) supprimé(s)`);
     } catch (error) {
       console.error('[ListsUI] Erreur vidage:', error);
+      writeLog('error', 'lists.js', 'Erreur lors du vidage de la liste: ' + error.message);
       this.showError('Erreur lors du vidage de la liste');
     }
   }
@@ -700,6 +728,7 @@ class ListsUI {
     const input = document.getElementById('import-file-input');
     if (!input) {
       console.error('[ListsUI] Input d\'import non trouvé');
+      writeLog('error', 'lists.js', 'Input d\'import non trouvé');
       return;
     }
     

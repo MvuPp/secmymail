@@ -1,3 +1,5 @@
+import { writeLog } from "../../modules/core/logger.js";
+
 /**
  * Interface de gestion des tags - Version simplifiée
  */
@@ -30,6 +32,7 @@ class TagsUI {
       this.setupEventListeners();
       this.updateSaveButton();
       console.log('[TagsUI] Interface simplifiée initialisée');
+      writeLog('info', 'tags.js', 'Interface de gestion des tags initialisée avec succès');
     } catch (error) {
       console.error('[TagsUI] Erreur initialisation:', error);
     }
@@ -47,12 +50,15 @@ class TagsUI {
       if (response && response.success) {
         this.quarantineOptions = response.data;
         console.log('[TagsUI] Options de quarantaine chargées:', this.quarantineOptions);
+        writeLog('info', 'tags.js', 'Options de quarantaine chargées avec succès');
       } else {
         this.quarantineOptions = this.getDefaultQuarantineOptions();
         console.warn('[TagsUI] Utilisation des options de quarantaine par défaut');
+        writeLog('warning', 'tags.js', 'Utilisation des options de quarantaine par défaut');
       }
     } catch (error) {
       console.error('[TagsUI] Erreur chargement options quarantaine:', error);
+      writeLog('error', 'tags.js', `Erreur lors du chargement des options de quarantaine: ${error.message}`);
       this.quarantineOptions = this.getDefaultQuarantineOptions();
     }
   }
@@ -82,12 +88,15 @@ class TagsUI {
       if (response && response.success) {
         this.availableFolders = response.folders;
         console.log(`[TagsUI] ${this.availableFolders.length} dossiers disponibles chargés`);
+        writeLog('info', 'tags.js', `${this.availableFolders.length} dossiers disponibles chargés avec succès`);
       } else {
         this.availableFolders = [];
         console.warn('[TagsUI] Aucun dossier disponible:', response?.error);
+        writeLog('warning', 'tags.js', 'Aucun dossier disponible, utilisation d\'un tableau vide');
       }
     } catch (error) {
       console.error('[TagsUI] Erreur chargement dossiers:', error);
+      writeLog('error', 'tags.js', `Erreur lors du chargement des dossiers disponibles: ${error.message}`);
       this.availableFolders = [];
     }
   }
@@ -104,12 +113,15 @@ class TagsUI {
       if (response && response.success) {
         this.quarantineStats = response.data;
         console.log('[TagsUI] Statistiques de quarantaine chargées:', this.quarantineStats);
+        writeLog('info', 'tags.js', 'Statistiques de quarantaine chargées avec succès');
       } else {
         this.quarantineStats = { totalQuarantined: 0 };
         console.warn('[TagsUI] Statistiques non disponibles:', response?.error);
+        writeLog('warning', 'tags.js', 'Statistiques de quarantaine non disponibles, utilisation des valeurs par défaut');
       }
     } catch (error) {
       console.error('[TagsUI] Erreur chargement stats:', error);
+      writeLog('error', 'tags.js', `Erreur lors du chargement des statistiques de quarantaine: ${error.message}`);
       this.quarantineStats = { totalQuarantined: 0 };
     }
   }
@@ -126,12 +138,15 @@ class TagsUI {
       if (response && response.success) {
         this.addressBookState = response.data;
         console.log('[TagsUI] État synchronisation carnet chargé:', this.addressBookState);
+        writeLog('info', 'tags.js', 'État de synchronisation du carnet d\'adresses chargé avec succès');
       } else {
         this.addressBookState = { enabled: false, lastSync: null, contactCount: 0 };
         console.warn('[TagsUI] Utilisation état carnet par défaut');
+        writeLog('warning', 'tags.js', 'Utilisation de l\'état par défaut pour le carnet d\'adresses');
       }
     } catch (error) {
       console.error('[TagsUI] Erreur chargement état carnet:', error);
+      writeLog('error', 'tags.js', `Erreur lors du chargement de l'état de synchronisation du carnet d'adresses: ${error.message}`);
       this.addressBookState = { enabled: false, lastSync: null, contactCount: 0 };
     }
   }
@@ -146,6 +161,7 @@ class TagsUI {
       if (enableToggle) {
         enableToggle.checked = this.quarantineOptions.enabled || false;
         console.log(`[TagsUI] Statut déplacement automatique: ${enableToggle.checked ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
+        writeLog('info', 'tags.js', `Statut de déplacement automatique: ${enableToggle.checked ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
       }
 
       // Sélection du dossier
@@ -184,6 +200,7 @@ class TagsUI {
         // Définir la valeur sélectionnée
         folderSelect.value = this.quarantineOptions.folder || '';
         console.log(`[TagsUI] Dossier de quarantaine: ${folderSelect.value}`);
+        writeLog('info', 'tags.js', `Dossier de quarantaine sélectionné: ${folderSelect.value}`);
       }
 
       // Checkboxes des types de menaces
@@ -212,6 +229,7 @@ class TagsUI {
       this.updateOptionsVisibility();
     } catch (error) {
       console.error('[TagsUI] Erreur rendu options quarantaine:', error);
+      writeLog('error', 'tags.js', `Erreur lors du rendu des options de quarantaine: ${error.message}`);
     }
   }
 
@@ -246,6 +264,7 @@ class TagsUI {
       this.updateAddressBookVisibility();
     } catch (error) {
       console.error('[TagsUI] Erreur rendu options carnet:', error);
+      writeLog('error', 'tags.js', `Erreur lors du rendu des options du carnet d'adresses: ${error.message}`);
     }
   }
 
@@ -279,6 +298,7 @@ class TagsUI {
     }
     
     console.log(`[TagsUI] Visibilité des options mise à jour (enabled=${enabled})`);
+    writeLog('info', 'tags.js', `Visibilité des options mise à jour (activé=${enabled})`);
   }
 
   /**
@@ -300,6 +320,7 @@ class TagsUI {
     }
     
     console.log(`[TagsUI] Visibilité du carnet mise à jour (enabled=${enabled})`);
+    writeLog('info', 'tags.js', `Visibilité du carnet d'adresses mise à jour (activé=${enabled})`);
   }
 
   setupEventListeners() {
@@ -323,6 +344,7 @@ class TagsUI {
       enableToggle.addEventListener('change', (e) => {
         const newValue = e.target.checked;
         console.log(`[TagsUI] Changement état déplacement: ${newValue ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
+        writeLog('info', 'tags.js', `Changement de l'état de déplacement automatique: ${newValue ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
         
         this.quarantineOptions.enabled = newValue;
         this.updateOptionsVisibility();
@@ -347,6 +369,7 @@ class TagsUI {
         }
         
         console.log(`[TagsUI] Changement dossier: ${newValue}`);
+        writeLog('info', 'tags.js', `Changement du dossier de quarantaine: ${newValue}`);
         this.quarantineOptions.folder = newValue;
         this.saveQuarantineOptions();
       });
@@ -358,6 +381,7 @@ class TagsUI {
       expediteurCheck.addEventListener('change', (e) => {
         this.quarantineOptions.quarantineExpediteursmalveillants = e.target.checked;
         console.log(`[TagsUI] Quarantaine expéditeurs: ${e.target.checked ? 'ACTIVÉE' : 'DÉSACTIVÉE'}`);
+        writeLog('info', 'tags.js', `Quarantaine des expéditeurs: ${e.target.checked ? 'ACTIVÉE' : 'DÉSACTIVÉE'}`);
         this.saveQuarantineOptions();
       });
     }
@@ -367,6 +391,7 @@ class TagsUI {
       liensCheck.addEventListener('change', (e) => {
         this.quarantineOptions.quarantineLiensMalveillants = e.target.checked;
         console.log(`[TagsUI] Quarantaine liens: ${e.target.checked ? 'ACTIVÉE' : 'DÉSACTIVÉE'}`);
+        writeLog('info', 'tags.js', `Quarantaine des liens: ${e.target.checked ? 'ACTIVÉE' : 'DÉSACTIVÉE'}`);
         this.saveQuarantineOptions();
       });
     }
@@ -376,6 +401,7 @@ class TagsUI {
       fichiersCheck.addEventListener('change', (e) => {
         this.quarantineOptions.quarantineFichiersMalveillants = e.target.checked;
         console.log(`[TagsUI] Quarantaine fichiers: ${e.target.checked ? 'ACTIVÉE' : 'DÉSACTIVÉE'}`);
+        writeLog('info', 'tags.js', `Quarantaine des fichiers: ${e.target.checked ? 'ACTIVÉE' : 'DÉSACTIVÉE'}`);
         this.saveQuarantineOptions();
       });
     }
@@ -455,6 +481,7 @@ class TagsUI {
       
       if (response && response.success) {
         console.log('[TagsUI] ✅ Options quarantaine sauvegardées');
+        writeLog('info', 'tags.js', 'Options de quarantaine sauvegardées avec succès');
         this.showMessage('Options de déplacement sauvegardées', 'success');
       } else {
         throw new Error(response?.error || 'Erreur sauvegarde options');
@@ -462,6 +489,7 @@ class TagsUI {
       
     } catch (error) {
       console.error('[TagsUI] ❌ Erreur sauvegarde options quarantaine:', error);
+      writeLog('error', 'tags.js', `Erreur lors de la sauvegarde des options de quarantaine: ${error.message}`);
       this.showMessage('Erreur sauvegarde des options', 'error');
     }
   }
@@ -499,6 +527,7 @@ class TagsUI {
       }
     } catch (error) {
       console.error('[TagsUI] Erreur toggle synchronisation:', error);
+      writeLog('error', 'tags.js', `Erreur lors de l'activation/désactivation de la synchronisation du carnet d'adresses: ${error.message}`);
       this.showMessage('Erreur activation/désactivation synchronisation', 'error');
       
       // Réinitialiser le toggle
@@ -536,11 +565,13 @@ class TagsUI {
         this.renderAddressBookOptions();
         
         this.showMessage(`${response.added} contacts ajoutés à la liste blanche`, 'success');
+        writeLog('info', 'tags.js', `Synchronisation du carnet d'adresses réussie: ${response.added} contacts ajoutés`);
       } else {
         throw new Error(response?.error || response?.message || 'Erreur synchronisation');
       }
     } catch (error) {
       console.error('[TagsUI] Erreur synchronisation carnet:', error);
+      writeLog('error', 'tags.js', `Erreur lors de la synchronisation du carnet d'adresses: ${error.message}`);
       this.showMessage('Erreur synchronisation carnet', 'error');
     } finally {
       // Réactiver le bouton
@@ -566,12 +597,15 @@ class TagsUI {
       if (response && response.success && response.data) {
         this.tagStates = response.data;
         console.log('[TagsUI] États des tags chargés depuis le background');
+        writeLog('info', 'tags.js', 'États des tags chargés depuis le background avec succès');
       } else {
         console.warn('[TagsUI] Échec chargement depuis background, utilisation des valeurs par défaut');
+        writeLog('warning', 'tags.js', 'Échec du chargement des états des tags depuis le background, utilisation des valeurs par défaut');
         await this.loadDefaultStatesFromBackground();
       }
     } catch (error) {
       console.error('[TagsUI] Erreur chargement depuis background:', error);
+      writeLog('error', 'tags.js', `Erreur lors du chargement des états des tags depuis le background: ${error.message}`);
       await this.loadDefaultStatesFromBackground();
     }
   }
@@ -590,15 +624,18 @@ class TagsUI {
         if (response && response.success && response.data) {
           this.tagStates = response.data;
           console.log('[TagsUI] États par défaut récupérés du background');
+          writeLog('info', 'tags.js', 'États par défaut des tags récupérés du background avec succès');
           return;
         }
       }
       
       this.tagStates = this.getMinimalDefaultStates();
       console.warn('[TagsUI] Utilisation des états minimaux locaux');
+      writeLog('warning', 'tags.js', 'Utilisation des états minimaux locaux pour les tags');
       
     } catch (error) {
       console.error('[TagsUI] Erreur chargement états par défaut:', error);
+      writeLog('error', 'tags.js', `Erreur lors du chargement des états par défaut des tags: ${error.message}`);
       this.tagStates = this.getMinimalDefaultStates();
     }
   }
@@ -731,9 +768,11 @@ class TagsUI {
       // Sauvegarder les options de quarantaine
       await this.saveQuarantineOptions();
       
+      writeLog('info', 'tags.js', 'Sauvegarde manuelle des paramètres réussie');
       this.showMessage('Paramètres sauvegardés', 'success');
     } catch (error) {
       console.error('[TagsUI] Erreur sauvegarde manuelle:', error);
+      writeLog('error', 'tags.js', `Erreur lors de la sauvegarde manuelle des paramètres: ${error.message}`);
       this.showMessage('Erreur lors de la sauvegarde', 'error');
     } finally {
       this.isSaving = false;
@@ -771,6 +810,7 @@ class TagsUI {
       
     } catch (error) {
       console.error('[TagsUI] Erreur réinitialisation:', error);
+      writeLog('error', 'tags.js', `Erreur lors de la réinitialisation des paramètres: ${error.message}`);
       this.showMessage('Erreur lors de la réinitialisation', 'error');
     } finally {
       this.isSaving = false;
@@ -860,6 +900,7 @@ class TagsUI {
     
     document.body.classList.add('color-picking');
     console.log('[TagsUI] 🎨 Popup couleur ouverte pour', colorButton.dataset.tag);
+    writeLog('info', 'tags.js', `Popup couleur ouverte pour le tag: ${colorButton.dataset.tag}`);
   }
 
   positionPopup(popup, colorButton) {
@@ -910,6 +951,7 @@ class TagsUI {
     const oldColor = this.tagStates[tagKey]?.color;
     
     console.log(`[TagsUI] 🎨 Changement couleur: ${tagKey} ${oldColor} → ${newColor}`);
+    writeLog('info', 'tags.js', `Changement de couleur pour le tag ${tagKey}: ${oldColor} → ${newColor}`);
     
     this.tagStates[tagKey].color = newColor;
     
@@ -942,19 +984,24 @@ class TagsUI {
       
       if (updateColorResponse && updateColorResponse.success) {
         console.log('[TagsUI] ✅ Couleur appliquée dans Thunderbird');
+        writeLog('info', 'tags.js', `Couleur du tag ${tagKey} mise à jour: ${newColor}`);
         this.showMessage(`Couleur mise à jour: ${newColor}`, 'success');
       } else if (updateColorResponse && updateColorResponse.warning) {
         console.warn('[TagsUI] ⚠️ Couleur sauvegardée mais pas appliquée:', updateColorResponse.warning);
+        writeLog('warning', 'tags.js', `Couleur du tag ${tagKey} sauvegardée mais non appliquée: ${updateColorResponse.warning}`);
         this.showMessage('Couleur sauvegardée', 'warning');
       } else {
         console.warn('[TagsUI] ⚠️ Échec application couleur Thunderbird:', updateColorResponse?.error);
+        writeLog('warning', 'tags.js', `Échec de l'application de la couleur pour le tag ${tagKey}: ${updateColorResponse?.error}`);
         this.showMessage('Couleur sauvegardée', 'warning');
       }
       
       console.log('[TagsUI] ✅ Couleur sauvegardée avec succès');
+      writeLog('info', 'tags.js', `Couleur du tag ${tagKey} sauvegardée avec succès: ${newColor}`);
       
     } catch (error) {
       console.error(`[TagsUI] ❌ Erreur sauvegarde couleur:`, error);
+      writeLog('error', 'tags.js', `Erreur lors de la sauvegarde de la couleur du tag ${tagKey}: ${error.message}`);
       
       this.tagStates[tagKey].color = oldColor;
       const element = this.activeColorPicker?.element;
@@ -973,6 +1020,7 @@ class TagsUI {
     if (this.tagStates[tagKey]) {
       this.tagStates[tagKey].active = isEnabled;
       console.log(`[TagsUI] 🏷️ Toggle tag: ${tagKey} → ${isEnabled ? 'activé' : 'désactivé'}`);
+      writeLog('info', 'tags.js', `Changement de l'état du tag ${tagKey}: ${isEnabled ? 'activé' : 'désactivé'}`);
       
       this.saveTagStates();
     }
@@ -987,13 +1035,16 @@ class TagsUI {
       
       if (response && response.success) {
         console.log('[TagsUI] ✅ États des tags sauvegardés');
+        writeLog('info', 'tags.js', 'États des tags sauvegardés avec succès');
         return true;
       } else {
         console.error('[TagsUI] Erreur réponse sauvegarde tags:', response?.error);
+        writeLog('error', 'tags.js', `Erreur lors de la sauvegarde des états des tags: ${response?.error}`);
         return false;
       }
     } catch (error) {
       console.error('[TagsUI] ❌ Erreur sauvegarde états tags:', error);
+      writeLog('error', 'tags.js', `Erreur lors de la sauvegarde des états des tags: ${error.message}`);
       return false;
     }
   }
@@ -1011,5 +1062,6 @@ class TagsUI {
 // Initialiser
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[TagsUI] 🚀 Initialisation interface simplifiée');
+  writeLog('info', 'tags.js', 'Initialisation de l\'interface simplifiée des tags');
   new TagsUI();
 });

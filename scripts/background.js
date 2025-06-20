@@ -8,6 +8,7 @@ import { tagManager } from '../modules/core/tags.js';
 import { autoMoveManager } from '../modules/core/autoMove.js';
 import { addressBookManager } from '../modules/core/addressBook.js';
 import { storage, STORAGE_KEYS } from '../modules/core/storage.js';
+import { writeLog } from '../modules/core/logger.js';
 
 /**
  * Gestionnaire de tâches asynchrones simulant le multithreading
@@ -85,19 +86,23 @@ class TaskManager {
   async executeMailTask(task) {
     try {
       console.log(`[Mail Task] 📧 Exécution: ${task.type}`);
+      writeLog('info', 'taskManager.js', `Exécution de la tâche mail: ${task.type} (${task.id})`);
       await task.handler(task.data);
     } catch (error) {
       console.error(`[Mail Task] Erreur:`, error);
+      writeLog('error', 'taskManager.js', `Erreur lors de l'exécution de la tâche mail ${task.id}: ${error.message}`);
     }
   }
 
   async executeAdminTask(task) {
     try {
       console.log(`[Admin Task] ⚙️ Exécution: ${task.type}`);
+      writeLog('info', 'taskManager.js', `Exécution de la tâche admin: ${task.type} (${task.id})`);
       const result = await task.handler(task.data);
       if (task.resolve) task.resolve(result);
     } catch (error) {
       console.error(`[Admin Task] Erreur:`, error);
+      writeLog('error', 'taskManager.js', `Erreur lors de l'exécution de la tâche admin ${task.id}: ${error.message}`);
       if (task.reject) task.reject(error);
     }
   }
@@ -168,6 +173,7 @@ class BackgroundService {
     this.CACHE_DURATION = 30000; // 30 secondes
     
     console.log('[SecMyMail] BackgroundService créé avec TaskManager');
+    writeLog('info', 'background.js', 'BackgroundService créé avec TaskManager');
   }
 
   getTagKey(type, status) {
@@ -192,6 +198,7 @@ class BackgroundService {
         this.tagStatesCache = result;
         this.tagStatesCacheExpiry = now + this.CACHE_DURATION;
         console.log('[SecMyMail] 📊 États des tags mis en cache');
+        writeLog('info', 'background.js', 'États des tags récupérés depuis le storage et mis en cache');
         return this.tagStatesCache;
       } else {
         // Retourner les états par défaut si rien en storage
@@ -202,6 +209,7 @@ class BackgroundService {
       }
     } catch (error) {
       console.error('[SecMyMail] Erreur récupération états des tags:', error);
+      writeLog('error', 'background.js', `Erreur lors de la récupération des états des tags: ${error.message}`);
       return this.getDefaultTagStates();
     }
   }
@@ -274,10 +282,12 @@ class BackgroundService {
       
       const isEnabled = tagState.active !== false; // Par défaut true si non défini
       console.log(`[SecMyMail] 🏷️ Tag ${tagKey}: ${isEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
+      writeLog('info', 'background.js', `Vérification du tag ${tagKey}: ${isEnabled ? 'ACTIVÉ' : 'DÉSACTIVÉ'}`);
       
       return isEnabled;
     } catch (error) {
       console.error(`[SecMyMail] Erreur vérification tag ${tagKey}:`, error);
+      writeLog('error', 'background.js', `Erreur lors de la vérification du tag ${tagKey}: ${error.message}`);
       return false; // En cas d'erreur, ne pas appliquer le tag
     }
   }
@@ -289,16 +299,19 @@ class BackgroundService {
     this.tagStatesCache = null;
     this.tagStatesCacheExpiry = 0;
     console.log('[SecMyMail] 🔄 Cache des états des tags invalidé');
+    writeLog('info', 'background.js', 'Cache des états des tags invalidé');
   }
 
   async initialize() {
     if (this.initialized) {
       console.log('[SecMyMail] ⚠️ Service déjà initialisé');
+      writeLog('info', 'background.js', 'Service déjà initialisé, aucune action nécessaire');
       return true;
     }
 
     if (this.initializationPromise) {
       console.log('[SecMyMail] ⏳ Initialisation en cours...');
+      writeLog('info', 'background.js', 'Initialisation en cours, attente de la promesse');
       return await this.initializationPromise;
     }
 
@@ -309,6 +322,7 @@ class BackgroundService {
   async _doInitialize() {
     try {
       console.log('[SecMyMail] 🚀 Initialisation avec TaskManager...');
+      writeLog('info', 'background.js', 'Démarrage de l\'initialisation du service');
       
       await this.initializeModules();
       await this.setupMailListener();
@@ -316,22 +330,28 @@ class BackgroundService {
       try {
         await autoMoveManager.initialize();
         console.log('[SecMyMail] ✅ AutoMoveManager initialisé');
+        writeLog('info', 'background.js', 'AutoMoveManager initialisé avec succès');
       } catch (error) {
         console.error('[SecMyMail] ❌ Erreur initialisation AutoMoveManager:', error);
+        writeLog('error', 'background.js', `Erreur lors de l'initialisation de AutoMoveManager: ${error.message}`);
       }
 
       try {
         await addressBookManager.initialize();
         console.log('[SecMyMail] ✅ AddressBookManager initialisé');
+        writeLog('info', 'background.js', 'AddressBookManager initialisé avec succès');
       } catch (error) {
         console.error('[SecMyMail] ❌ Erreur initialisation AddressBookManager:', error);
+        writeLog('error', 'background.js', `Erreur lors de l'initialisation de AddressBookManager: ${error.message}`);
       }
       
       this.initialized = true;
       console.log('[SecMyMail] ✅ Service initialisé - TaskManager actif');
+      writeLog('info', 'background.js', 'Service initialisé avec succès - TaskManager actif');
       return true;
     } catch (error) {
       console.error('[SecMyMail] ❌ Erreur initialisation:', error);
+      writeLog('error', 'background.js', `Erreur lors de l'initialisation du service: ${error.message}`);
       this.initializationPromise = null;
       return false;
     }
@@ -349,8 +369,10 @@ class BackgroundService {
       await this.getTagStates();
       
       console.log('[SecMyMail] ✓ Modules initialisés');
+      writeLog('info', 'background.js', 'Modules initialisés avec succès');
     } catch (error) {
       console.error('[SecMyMail] Erreur initialisation modules:', error);
+      writeLog('error', 'background.js', `Erreur lors de l'initialisation des modules: ${error.message}`);
       throw error;
     }
   }
@@ -379,12 +401,15 @@ class BackgroundService {
         this.mailThread.listenerActive = true;
         
         console.log('[SecMyMail] ✅ Listener Mail configuré');
+        writeLog('info', 'background.js', 'Listener Mail configuré avec succès');
       } else {
         console.warn('[SecMyMail] ⚠️ API onNewMailReceived non disponible');
+        writeLog('warning', 'background.js', 'API onNewMailReceived non disponible, listener non configuré');
         this.mailThread.listenerActive = false;
       }
     } catch (error) {
       console.error('[SecMyMail] Erreur setup listener:', error);
+      writeLog('error', 'background.js', `Erreur lors de la configuration du listener Mail: ${error.message}`);
       this.mailThread.listenerActive = false;
     }
   }
@@ -393,6 +418,7 @@ class BackgroundService {
     try {
       const timestamp = new Date().toISOString();
       console.log(`[Mail Thread] 📧 ${messageList.messages.length} nouveaux mails dans ${folder.name}`);
+      writeLog('info', 'background.js', `Nouveaux mails reçus dans ${folder.name}: ${messageList.messages.length} messages`);
       
       let addedCount = 0;
       
@@ -440,13 +466,16 @@ class BackgroundService {
           
         } catch (error) {
           console.error(`[Mail Thread] Erreur ajout message ${message.id}:`, error);
+          writeLog('error', 'background.js', `Erreur lors de l'ajout du message ${message.id}: ${error.message}`);
         }
       }
       
       console.log(`[Mail Thread] 📊 ${addedCount} messages ajoutés au TaskManager`);
+      writeLog('info', 'background.js', `Ajout de ${addedCount} messages au TaskManager pour traitement`);
       
     } catch (error) {
       console.error('[Mail Thread] Erreur handleNewMailReceived:', error);
+      writeLog('error', 'background.js', `Erreur lors du traitement des nouveaux mails: ${error.message}`);
     }
   }
 
@@ -454,18 +483,22 @@ class BackgroundService {
     try {
       const { messageId, subject, author } = messageData;
       console.log(`[Mail Thread] 📊 Analyse: "${subject}" de ${author}`);
+      writeLog('info', 'background.js', `Analyse du message ${messageId} - Sujet: "${subject}" de ${author}`);
       
       const analysis = await this.messageAnalyzer.analyzeMessage(messageId);
       
       console.log(`[Mail Thread] Résultat: E:${analysis.expediteur} L:${analysis.liens} F:${analysis.fichiers}`);
+      writeLog('info', 'background.js', `Résultat analyse message ${messageId}: E:${analysis.expediteur} L:${analysis.liens} F:${analysis.fichiers}`);
       
       // Focus sur les liens
       if (analysis.details?.linkDetails?.count > 0) {
         const links = analysis.details.linkDetails.links;
         console.log(`[Mail Thread] 🔗 ${links.length} liens détectés`);
+        writeLog('info', 'background.js', `Liens détectés dans le message ${messageId}: ${links.length} liens`);
         
         if (analysis.liens <= 0) {
           console.warn(`[Mail Thread] 🚨 LIENS ${analysis.liens === -1 ? 'MALVEILLANTS' : 'SUSPECTS'} !`);
+          writeLog('warning', 'background.js', `Liens ${analysis.liens === -1 ? 'malveillants' : 'suspects'} détectés dans le message ${messageId}`);
         }
       }
       
@@ -474,6 +507,7 @@ class BackgroundService {
       
     } catch (error) {
       console.error(`[Mail Thread] Erreur traitement message:`, error);
+      writeLog('error', 'background.js', `Erreur lors du traitement du message ${messageData.messageId}: ${error.message}`);
     }
   }
 
@@ -485,6 +519,7 @@ class BackgroundService {
     
     try {
       console.log(`[Mail Thread] 🔒 Vérification déplacement automatique: ${messageId}`);
+      writeLog('info', 'background.js', `Vérification du déplacement automatique pour le message ${messageId}`);
       
       // Vérifier s'il y a des menaces détectées
       if (analysis.expediteur === -1) {
@@ -500,6 +535,7 @@ class BackgroundService {
       }
     } catch (error) {
       console.error(`[Mail Thread] Erreur déplacement automatique:`, error);
+      writeLog('error', 'background.js', `Erreur lors du traitement du déplacement automatique pour le message ${messageId}: ${error.message}`);
     }
   }
 
@@ -526,6 +562,7 @@ class BackgroundService {
           });
         } else {
           console.log(`[Mail Thread] 🚫 Tag expéditeur désactivé: ${expediteurTagKey}`);
+          writeLog('warning', 'background.js', `Tag expéditeur désactivé: ${expediteurTagKey}`);
         }
       }
       
@@ -548,6 +585,7 @@ class BackgroundService {
             });
           } else {
             console.log(`[Mail Thread] 🚫 Tag liens désactivé: ${liensTagKey}`);
+            writeLog('warning', 'background.js', `Tag liens désactivé: ${liensTagKey}`);
           }
         }
       }
@@ -571,11 +609,13 @@ class BackgroundService {
             });
           } else {
             console.log(`[Mail Thread] 🚫 Tag fichiers désactivé: ${fichiersTagKey}`);
+            writeLog('warning', 'background.js', `Tag fichiers désactivé: ${fichiersTagKey}`);
           }
         }
       }
       
       console.log(`[Mail Thread] 📊 Vérification tags: ${enabledTagsFound}/${totalTagsChecked} activés`);
+      writeLog('info', 'background.js', `Vérification des tags pour le message ${messageId}: ${enabledTagsFound}/${totalTagsChecked} activés`);
       
       // Application des tags activés uniquement
       let successCount = 0;
@@ -585,22 +625,28 @@ class BackgroundService {
           if (success) {
             successCount++;
             console.log(`[Mail Thread] ✅ Tag appliqué: ${tagInfo.key} (${tagInfo.category})`);
+            writeLog('info', 'background.js', `Tag appliqué avec succès: ${tagInfo.key} (${tagInfo.category})`);
           } else {
             console.warn(`[Mail Thread] ⚠️ Échec application tag: ${tagInfo.key}`);
+            writeLog('warning', 'background.js', `Échec de l'application du tag: ${tagInfo.key}`);
           }
         } catch (tagError) {
           console.error(`[Mail Thread] Erreur tag ${tagInfo.key}:`, tagError);
+          writeLog('error', 'background.js', `Erreur lors de l'application du tag ${tagInfo.key}: ${tagError.message}`);
         }
       }
       
       if (tagsToApply.length === 0) {
         console.log(`[Mail Thread] 🏷️ Aucun tag à appliquer (tous désactivés ou non applicables)`);
+        writeLog('info', 'background.js', 'Aucun tag à appliquer (tous désactivés ou non applicables)');
       } else {
         console.log(`[Mail Thread] 📊 Tags appliqués: ${successCount}/${tagsToApply.length} réussis`);
+        writeLog('info', 'background.js', `Tags appliqués: ${successCount}/${tagsToApply.length} réussis`);
       }
       
     } catch (error) {
       console.error('[Mail Thread] Erreur application tags:', error);
+      writeLog('error', 'background.js', `Erreur lors de l'application des tags: ${error.message}`);
     }
   }
 
@@ -624,6 +670,7 @@ class BackgroundService {
     const { action } = data;
     
     console.log(`[Admin Thread] 🔧 Exécution: ${action}`);
+    writeLog('info', 'background.js', `Exécution de l'action admin: ${action}`);
     
     switch (action) {
       case 'addToWhitelist':
@@ -690,9 +737,11 @@ class BackgroundService {
   async getAvailableFolders() {
     try {
       console.log('[Admin Thread] 📁 Récupération dossiers disponibles');
+      writeLog('info', 'background.js', 'Récupération des dossiers disponibles');
       
       if (!browser.folders) {
         console.warn('[Admin Thread] API folders non disponible');
+        writeLog('warning', 'background.js', 'API folders non disponible, récupération des dossiers impossible');
         return { success: false, error: 'API folders non disponible' };
       }
       
@@ -716,14 +765,17 @@ class BackgroundService {
           
         } catch (accountError) {
           console.warn(`[Admin Thread] Erreur dossiers compte ${account.name}:`, accountError);
+          writeLog('warning', 'background.js', `Erreur lors de la récupération des dossiers pour le compte ${account.name}: ${accountError.message}`);
         }
       }
       
       console.log(`[Admin Thread] 📁 ${allFolders.length} dossiers trouvés`);
+      writeLog('info', 'background.js', `Dossiers disponibles récupérés: ${allFolders.length} dossiers`);
       return { success: true, folders: allFolders };
       
     } catch (error) {
       console.error('[Admin Thread] Erreur récupération dossiers:', error);
+      writeLog('error', 'background.js', `Erreur lors de la récupération des dossiers: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -734,6 +786,7 @@ class BackgroundService {
   async updateTagStates(newTagStates) {
     try {
       console.log('[Admin Thread] 🔄 Mise à jour des états des tags');
+      writeLog('info', 'background.js', 'Mise à jour des états des tags');
       
       // Sauvegarder dans le storage
       await storage.set(STORAGE_KEYS.TAG_STATES, newTagStates);
@@ -748,10 +801,12 @@ class BackgroundService {
       await this.syncTagsWithThunderbird(newTagStates);
       
       console.log('[Admin Thread] ✅ États des tags mis à jour et synchronisés');
+      writeLog('info', 'background.js', 'États des tags mis à jour et synchronisés avec Thunderbird');
       return { success: true, synchronized: true };
       
     } catch (error) {
       console.error('[Admin Thread] ❌ Erreur mise à jour états des tags:', error);
+      writeLog('error', 'background.js', `Erreur lors de la mise à jour des états des tags: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -762,16 +817,19 @@ class BackgroundService {
   async syncTagsWithThunderbird(tagStates) {
     try {
       console.log('[Admin Thread] 🔄 Synchronisation tags avec Thunderbird');
+      writeLog('info', 'background.js', 'Synchronisation des tags avec Thunderbird');
       
       // Vérifier si l'API tags est disponible
       if (!browser.messages || !browser.messages.tags) {
         console.warn('[Admin Thread] ⚠️ API messages.tags non disponible');
+        writeLog('warning', 'background.js', 'API messages.tags non disponible, synchronisation impossible');
         return { success: false, error: 'API tags non disponible' };
       }
       
       // Récupérer les tags existants dans Thunderbird
       const existingTags = await browser.messages.tags.list();
       console.log('[Admin Thread] 📋 Tags existants dans Thunderbird:', existingTags.length);
+      writeLog('info', 'background.js', `Tags existants dans Thunderbird: ${existingTags.length} tags`);
       
       let updatedCount = 0;
       let createdCount = 0;
@@ -789,25 +847,30 @@ class BackgroundService {
                 color: tagState.color
               });
               console.log(`[Admin Thread] 🎨 Tag mis à jour: ${tagKey} → ${tagState.color}`);
+              writeLog('info', 'background.js', `Tag mis à jour: ${tagKey} → ${tagState.color}`);
               updatedCount++;
             } else {
               console.log(`[Admin Thread] 📋 Tag ${tagKey} déjà à jour (${tagState.color})`);
+              writeLog('info', 'background.js', `Tag ${tagKey} déjà à jour (${tagState.color})`);
             }
           } else {
             // Créer le tag s'il n'existe pas
             const label = this.getTagLabel(tagKey);
             await browser.messages.tags.create(tagKey, label, tagState.color);
             console.log(`[Admin Thread] ➕ Tag créé: ${tagKey} (${tagState.color})`);
+            writeLog('info', 'background.js', `Tag créé: ${tagKey} (${tagState.color})`);
             createdCount++;
           }
           
         } catch (tagError) {
           console.error(`[Admin Thread] ❌ Erreur traitement tag ${tagKey}:`, tagError);
+          writeLog('error', 'background.js', `Erreur lors du traitement du tag ${tagKey}: ${tagError.message}`);
           // Continuer avec les autres tags malgré l'erreur
         }
       }
       
       console.log(`[Admin Thread] ✅ Synchronisation terminée: ${updatedCount} mis à jour, ${createdCount} créés`);
+      writeLog('info', 'background.js', `Synchronisation des tags terminée: ${updatedCount} mis à jour, ${createdCount} créés`);
       return { 
         success: true, 
         updated: updatedCount, 
@@ -816,6 +879,7 @@ class BackgroundService {
       
     } catch (error) {
       console.error('[Admin Thread] ❌ Erreur synchronisation Thunderbird:', error);
+      writeLog('error', 'background.js', `Erreur lors de la synchronisation des tags avec Thunderbird: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -826,6 +890,7 @@ class BackgroundService {
   async updateTagColor(tagKey, newColor, oldColor = null) {
     try {
       console.log(`[Admin Thread] 🎨 Mise à jour couleur tag: ${tagKey} → ${newColor}`);
+      writeLog('info', 'background.js', `Mise à jour de la couleur du tag ${tagKey} vers ${newColor}`);
       
       // Vérifier si le tag existe dans notre configuration
       if (!this.tagStates[tagKey]) {
@@ -843,11 +908,13 @@ class BackgroundService {
             color: newColor
           });
           console.log(`[Admin Thread] ✅ Couleur tag mise à jour dans Thunderbird: ${tagKey} → ${newColor}`);
+          writeLog('info', 'background.js', `Couleur du tag ${tagKey} mise à jour vers ${newColor}`);
         } else {
           // Créer le tag s'il n'existe pas
           const label = this.getTagLabel(tagKey);
           await browser.messages.tags.create(tagKey, label, newColor);
           console.log(`[Admin Thread] ✅ Tag créé dans Thunderbird: ${tagKey} (${label}, ${newColor})`);
+          writeLog('info', 'background.js', `Tag ${tagKey} créé dans Thunderbird (${label}, ${newColor})`);
         }
         
         return { 
@@ -859,6 +926,7 @@ class BackgroundService {
         };
       } else {
         console.warn('[Admin Thread] ⚠️ API messages.tags non disponible');
+        writeLog('warning', 'background.js', 'API messages.tags non disponible, mise à jour couleur impossible');
         return { 
           success: true, 
           warning: 'API tags non disponible',
@@ -869,6 +937,7 @@ class BackgroundService {
       
     } catch (error) {
       console.error(`[Admin Thread] ❌ Erreur mise à jour couleur tag ${tagKey}:`, error);
+      writeLog('error', 'background.js', `Erreur lors de la mise à jour de la couleur du tag ${tagKey}: ${error.message}`);
       return { 
         success: false, 
         error: error.message, 
@@ -905,6 +974,7 @@ class BackgroundService {
       return { success: true, data: tagStates };
     } catch (error) {
       console.error('[Admin Thread] Erreur récupération états des tags:', error);
+      writeLog('error', 'background.js', `Erreur lors de la récupération des états des tags: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -930,6 +1000,7 @@ class BackgroundService {
         await storage.set(mapKey, currentList);
         
         console.log(`[Admin Thread] ✅ Ajouté à ${storageKey}: ${value}`);
+        writeLog('info', 'background.js', `Ajouté à ${storageKey}: ${value}`);
         return { success: true, added: value, listSize: currentList.length };
       } else {
         return { success: false, error: 'Déjà présent', listSize: currentList.length };
@@ -937,6 +1008,7 @@ class BackgroundService {
       
     } catch (error) {
       console.error(`[Admin Thread] Erreur ajout à la liste:`, error);
+      writeLog('error', 'background.js', `Erreur lors de l'ajout à la liste ${storageKey}: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -959,6 +1031,7 @@ class BackgroundService {
         await storage.set(mapKey, currentList);
         
         console.log(`[Admin Thread] ✅ Supprimé de ${storageKey}: ${value}`);
+        writeLog('info', 'background.js', `Supprimé de ${storageKey}: ${value}`);
         return { success: true, removed: value, listSize: currentList.length };
       } else {
         return { success: false, error: 'Non trouvé', listSize: currentList.length };
@@ -966,6 +1039,7 @@ class BackgroundService {
       
     } catch (error) {
       console.error(`[Admin Thread] Erreur suppression de la liste:`, error);
+      writeLog('error', 'background.js', `Erreur lors de la suppression de la liste ${storageKey}: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -982,10 +1056,12 @@ class BackgroundService {
       }
       
       console.log(`[Admin Thread] ✅ Configuration mise à jour`);
+      writeLog('info', 'background.js', 'Configuration mise à jour avec succès');
       return { success: true, config: newConfig };
       
     } catch (error) {
       console.error(`[Admin Thread] Erreur config:`, error);
+      writeLog('error', 'background.js', `Erreur lors de la mise à jour de la configuration: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -1014,11 +1090,19 @@ class BackgroundService {
         domainWhitelist: lists.domainWhitelist.length,
         domainBlacklist: lists.domainBlacklist.length
       });
+
+      writeLog('info', 'background.js', `Listes récupérées: ${JSON.stringify({
+        emailWhitelist: lists.emailWhitelist.length,
+        emailBlacklist: lists.emailBlacklist.length,
+        domainWhitelist: lists.domainWhitelist.length,
+        domainBlacklist: lists.domainBlacklist.length
+      })}`);
       
       return { success: true, lists };
       
     } catch (error) {
       console.error(`[Admin Thread] Erreur récupération listes:`, error);
+      writeLog('error', 'background.js', `Erreur lors de la récupération des listes: ${error.message}`);
       return { success: false, error: error.message };
     }
   }
@@ -1031,6 +1115,7 @@ class BackgroundService {
     return new Promise(async (resolve) => {
       try {
         console.log(`[SecMyMail] 📨 Message UI reçu:`, message.action);
+        writeLog('info', 'background.js', `Message UI reçu: ${message.action}`);
         
         switch (message.action) {
           case 'getStats':
@@ -1062,11 +1147,13 @@ class BackgroundService {
               resolve(result);
             } catch (error) {
               console.error(`[SecMyMail] Erreur action ${message.action}:`, error);
+              writeLog('error', 'background.js', `Erreur lors de l'exécution de l'action ${message.action}: ${error.message}`);
               resolve({ success: false, error: error.message });
             }
         }
       } catch (error) {
         console.error(`[SecMyMail] Erreur handleUIMessage:`, error);
+        writeLog('error', 'background.js', `Erreur lors du traitement du message UI: ${error.message}`);
         resolve({ success: false, error: error.message });
       }
     });
@@ -1083,6 +1170,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     return Promise.resolve(result);
   } catch (error) {
     console.error('[SecMyMail] Erreur communication UI:', error);
+    writeLog('error', 'background.js', `Erreur lors de la communication avec l'UI: ${error.message}`);
     return Promise.resolve({ success: false, error: error.message });
   }
 });
@@ -1090,28 +1178,34 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 // === GESTION ÉVÉNEMENTS ===
 browser.runtime.onInstalled.addListener(async (details) => {
   console.log(`[SecMyMail] Extension ${details.reason}`);
+  writeLog('info', 'background.js', `Extension installée: ${details.reason}`);
   const success = await backgroundService.initialize();
   if (success) {
     console.log('[SecMyMail] 🎯 Extension prête - TaskManager actif');
+    writeLog('info', 'background.js', 'Extension prête - TaskManager actif');
   }
 });
 
 browser.runtime.onStartup.addListener(async () => {
   console.log('[SecMyMail] 🌅 Démarrage Thunderbird');
+  writeLog('info', 'background.js', 'Démarrage Thunderbird');
   await backgroundService.initialize();
 });
 
 // === DÉMARRAGE IMMÉDIAT ===
 console.log('[SecMyMail] 🔥 Service Worker chargé - Version TaskManager');
 
+
 (async () => {
   try {
     const success = await backgroundService.initialize();
     if (success) {
       console.log('[SecMyMail] 💚 Service prêt - Threading simulé actif');
+      writeLog('info', 'background.js', 'Service prêt - Threading simulé actif');
     }
   } catch (error) {
     console.error('[SecMyMail] Erreur démarrage:', error);
+    writeLog('error', 'background.js', `Erreur lors du démarrage du service: ${error.message}`);
   }
 })();
 
@@ -1123,6 +1217,7 @@ setInterval(() => {
   const status = backgroundService.taskManager.getStatus();
   if (status.mailTasks > 0 || status.adminTasks > 0) {
     console.log(`[SecMyMail] 💓 Mail Tasks: ${status.mailTasks} | Admin Tasks: ${status.adminTasks} | Processing: M:${status.isMailProcessing} A:${status.isAdminProcessing}`);
+    writeLog('info', 'background.js', `Statut des tâches: Mail Tasks: ${status.mailTasks}, Admin Tasks: ${status.adminTasks}, Processing: M:${status.isMailProcessing} A:${status.isAdminProcessing}`);
   }
 }, 600);
 
