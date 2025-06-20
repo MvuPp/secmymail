@@ -509,7 +509,6 @@ class AutoMoveTest {
     
     await test('moveMessageIfNeeded should initialize if needed', async () => {
       resetTestState();
-      // Ne pas initialiser pour tester l'auto-initialisation
       
       const result = await this.autoMoveManager.moveMessageIfNeeded('msg123', 'expediteur_malveillant');
       assert.strictEqual(this.autoMoveManager.initialized, true, 'Should auto-initialize');

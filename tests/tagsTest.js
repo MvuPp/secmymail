@@ -10,7 +10,6 @@ globalThis.browser = {
         return [
           { key: 'secmymail.expediteur_malveillant', tag: 'Expéditeur Malveillant', color: '#FF0000' },
           { key: 'secmymail.lien_sur', tag: 'Lien Sûr', color: '#32CD32' },
-          // Quelques tags seulement pour le test
         ];
       },
       create: async (key, tag, color) => {

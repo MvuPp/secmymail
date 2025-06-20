@@ -685,7 +685,6 @@ class TagsUI {
     }
 
     setupEventListeners() {
-        // Setup minimal listeners for testing
         return true;
     }
 
@@ -795,7 +794,6 @@ class TagsUITest {
         });
         
         await test('renderTags should render all tag categories', () => {
-            // First load tag states
             this.tagsUI.tagStates = this.tagsUI.getMinimalDefaultStates();
             
             const result = this.tagsUI.renderTags();
@@ -803,7 +801,6 @@ class TagsUITest {
         });
         
         await test('renderCategoryTags should render specific category tags', () => {
-            // First load tag states
             this.tagsUI.tagStates = this.tagsUI.getMinimalDefaultStates();
             
             const result = this.tagsUI.renderCategoryTags('email-tags', [
@@ -815,7 +812,6 @@ class TagsUITest {
         });
         
         await test('renderQuarantineOptions should render quarantine settings', () => {
-            // First load options
             this.tagsUI.quarantineOptions = this.tagsUI.getDefaultQuarantineOptions();
             this.tagsUI.quarantineStats = { totalQuarantined: 42 };
             
@@ -824,7 +820,6 @@ class TagsUITest {
         });
         
         await test('renderAddressBookOptions should render address book settings', () => {
-            // First load state
             this.tagsUI.addressBookState = { 
                 enabled: true, 
                 lastSync: '2025-06-18T10:30:00Z', 
@@ -868,7 +863,6 @@ class TagsUITest {
         });
         
         await test('init should handle errors gracefully', async () => {
-            // Override a critical method to throw an error
             const originalLoadMethod = this.tagsUI.loadTagStatesFromBackground;
             this.tagsUI.loadTagStatesFromBackground = async () => {
                 throw new Error('Test error');
@@ -877,12 +871,10 @@ class TagsUITest {
             const result = await this.tagsUI.init();
             assert.strictEqual(result, false, 'Init should return false on error');
             
-            // Restore original method
             this.tagsUI.loadTagStatesFromBackground = originalLoadMethod;
         });
         
         await test('loadQuarantineOptions should fall back to defaults on error', async () => {
-            // Override sendMessage to simulate failure
             const originalSendMessage = browser.runtime.sendMessage;
             browser.runtime.sendMessage = async (message) => {
                 if (message.action === 'getQuarantineOptions') {
@@ -895,7 +887,6 @@ class TagsUITest {
             assert.strictEqual(result, false, 'Should indicate failure when loading fails');
             assert.strictEqual(this.tagsUI.quarantineOptions.enabled, false, 'Should use default enabled state (false)');
             
-            // Restore original function
             browser.runtime.sendMessage = originalSendMessage;
         });
         

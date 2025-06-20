@@ -1,10 +1,13 @@
+import { storage, STORAGE_KEYS } from '../../modules/core/storage.js';
+
 class LogsUI {
   constructor() {}
 
   async init() {
-    try {      
+    try {
+      await storage.initialize(); // S'assure que le stockage sécurisé est prêt
       this.setupEventListeners();
-      this.updateInterface();
+      await this.updateInterface();
     } catch (error) {
       this.showError('Erreur lors de l\'initialisation');
     }
@@ -20,20 +23,21 @@ class LogsUI {
     document.getElementById('clear-current-logs')?.addEventListener('click', () => this.confirmClearLogs());
   }
 
-  updateInterface() {
-    this.renderLogs();
+  async updateInterface() {
+    await this.renderLogs();
   }
 
-  getLogs() {
+  async getLogs() {
     try {
-      return JSON.parse(localStorage.getItem('secmymail_logs') || '{}');
+      await storage.initialize();
+      return await storage.get(STORAGE_KEYS.LOGS, {});
     } catch {
       return {};
     }
   }
 
-  renderLogs() {
-    const logs = this.getLogs();
+  async renderLogs() {
+    const logs = await this.getLogs();
     const container = document.getElementById("logsList");
     container.innerHTML = "";
 
@@ -64,17 +68,17 @@ class LogsUI {
       });
   }
 
-  exportLogs() {
+  async exportLogs() {
     try {
-      const logs = this.getLogs();
+      const logs = await this.getLogs();
       let lines = [];
-      
+
       // En-tête pour clarifier le format
       lines.push("# SecMyMail Logs Export");
       lines.push("# Format: DATE,TYPE,SOURCE,DETAILS");
       lines.push("# Generated: " + new Date().toISOString());
       lines.push("");
-      
+
       // Traiter tous les logs par ordre chronologique
       Object.keys(logs).sort().forEach(day => {
         logs[day].forEach(entry => {
@@ -83,12 +87,12 @@ class LogsUI {
           const cleanType = (entry.type || '').replace(/,/g, ' ');
           const cleanSource = (entry.source || '').replace(/,/g, ' ');
           const cleanInfo = (entry.info || '').replace(/,/g, ' ').replace(/\n/g, ' ').replace(/\r/g, '');
-          
+
           // Format: DATE,TYPE,SOURCE,DETAILS
           lines.push(`${cleanDate},${cleanType},${cleanSource},${cleanInfo}`);
         });
       });
-      
+
       // Créer le fichier avec l'extension .logs
       const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
@@ -99,8 +103,7 @@ class LogsUI {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
-      // Message de confirmation
+
       this.showSuccess('Logs exportés avec succès au format .logs');
     } catch (error) {
       console.error('Erreur lors de l\'export des logs:', error);
@@ -128,9 +131,9 @@ class LogsUI {
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
 
-    document.getElementById('confirm-clear-logs').onclick = () => {
-      localStorage.removeItem('secmymail_logs');
-      this.renderLogs();
+    document.getElementById('confirm-clear-logs').onclick = async () => {
+      await storage.set(STORAGE_KEYS.LOGS, {});
+      await this.renderLogs();
       document.body.removeChild(overlay);
     };
 
@@ -168,21 +171,21 @@ class LogsUI {
 
     const messageEl = document.createElement('div');
     messageEl.className = `message message-${type}`;
-    
+
     const colors = {
       success: '#28a745',
       error: '#dc3545',
       info: '#007bff',
       warning: '#ffc107'
     };
-    
+
     const icons = {
       success: '✅',
       error: '❌',
       info: 'ℹ️',
       warning: '⚠️'
     };
-    
+
     messageEl.style.cssText = `
       background: ${colors[type] || colors.info}; color: white;
       padding: 15px 20px; margin-bottom: 10px; border-radius: 8px;
@@ -191,12 +194,12 @@ class LogsUI {
       display: flex; align-items: center; gap: 10px;
       border-left: 4px solid rgba(255,255,255,0.3);
     `;
-    
+
     messageEl.innerHTML = `
       <span style="font-size: 16px;">${icons[type] || icons.info}</span>
       <span>${message}</span>
     `;
-    
+
     container.appendChild(messageEl);
 
     // Auto-suppression après 4 secondes
@@ -222,7 +225,7 @@ style.textContent = `
     from { transform: translateX(0); opacity: 1; }
     to { transform: translateX(100%); opacity: 0; }
   }
-  
+
   .log-entry {
     display: flex;
     align-items: center;
@@ -235,31 +238,31 @@ style.textContent = `
     font-family: 'Courier New', monospace;
     font-size: 13px;
   }
-  
+
   .log-date {
     color: #28a745;
     font-weight: 600;
     min-width: 160px;
   }
-  
+
   .log-type {
     color: #ffc107;
     font-weight: 600;
     min-width: 80px;
   }
-  
+
   .log-source {
     color: #17a2b8;
     font-weight: 600;
     min-width: 120px;
   }
-  
+
   .log-info {
     color: #e9ecef;
     flex: 1;
     word-break: break-word;
   }
-  
+
   .log-entry:hover {
     background: rgba(255,255,255,0.1);
   }

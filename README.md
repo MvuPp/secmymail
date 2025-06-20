@@ -14,7 +14,7 @@
 
 ## Introduction
 
-**SecMyMail** is an extension for the **Thunderbird** email client, developed in **JavaScript**. Its main objective is to identify and classify potentially suspicious emails based on their origin, the links they contain, or attached files.
+**SecMyMail** is an extension for the **Thunderbird** email client, developed in **JavaScript**. Its main goal is to identify and classify potentially suspicious emails based on their origin, the links they contain, or attached files.
 
 ---
 
@@ -44,7 +44,7 @@
 ## Debug
 
 1. Open Thunderbird.
-2. Go to the **add-ons** tab in settings.
+2. Go to the **add-ons** tab in the settings.
 3. Click on **Debug add-ons**.
 4. Add a new add-on by selecting the `manifest.json` file.
 5. The extension is now installed and ready to use.
@@ -63,15 +63,15 @@ Once the extension is activated:
 
 ## Features
 
-- SecMyMail checks the domain of the sender's email address and compares it to a list of trusted domains and a list of malicious domains. If the domain is not in the trusted list, the email is marked as suspicious. If it's in the malicious list, the email is marked as dangerous.
+- SecMyMail checks the sender's email domain and compares it to a list of trusted domains and a list of malicious domains. If the domain is not in the trusted list, the email is marked as suspicious; if it is in the malicious list, the email is marked as dangerous.
 
-- SecMyMail analyzes the email content and checks if URLs in the email are reliable or not. If a URL is not in the trusted list, the email is marked as suspicious. It also detects hyperlinks that differ from the displayed URL.
+- SecMyMail analyzes the email content and checks if the URLs in the email are reliable or not. If a URL is not in the trusted list, the email is marked as suspicious. It also detects hyperlinks that are different from the displayed URL.
 
 - SecMyMail checks the extension of attached files and compares them to a list of dangerous file extensions. If the attachment is dangerous, the email is marked as dangerous.
 
 ### Address Book and Whitelist
 
-- Allows adding domain names or email addresses considered trustworthy.
+- Allows you to add domain names or email addresses considered trustworthy.
 
 #### Add data to the whitelist
 
@@ -82,13 +82,13 @@ Once the extension is activated:
 
 #### Remove data from the whitelist
 
-- Hover over an existing entry and click the red cross.
+- Click the trash can next to the domain or email to remove it.
 
 ---
 
 ### Blacklist
 
-- Allows adding domain names or email addresses considered dangerous.
+- Allows you to add domain names or email addresses considered dangerous.
 
 #### Add data
 
@@ -99,7 +99,7 @@ Once the extension is activated:
 
 #### Remove data
 
-- Hover over an existing entry and click the red cross.
+- Click the trash can next to the domain or email to remove it.
 
 ---
 
@@ -112,23 +112,24 @@ Once the extension is activated:
 #### Enable/Disable a tag
 
 1. Click the button corresponding to the tag.
-2. The button becomes green if the tag is enabled, red if disabled.
+2. The button turns white on a green background if the tag is enabled, and white on a gray background if it is disabled.
 
 #### Enable automatic email movement
 
-1. Click the button next to **Email movement**.
-2. Green = Enabled, Red = Disabled.
+1. Click the button next to **Enable automatic movement**.
+2. Green = Enabled, Gray = Disabled.
 
 #### Change tag colors
 
-1. Go to **Tag Management** > **Change colors**.
-2. Select the color to modify and choose a new color.
+1. Go to **Tag Management**.
+2. Several tag categories are available: **Sender**, **Files**, **Links**.
+3. To change a tag's color, click on the color of the corresponding row and select the new color.
 
 ---
 
 ## Notes
 
-- Feel free to explore the user interface to discover other available options.
+- Feel free to consult the user manual to explore other available options.
 
 ---
 
@@ -139,7 +140,7 @@ For any assistance, contact https://github.com/MvuPp/secmymail/issues.
 ## Authors
 
 - [**MvuPp**]
-- [**Schell Yanis**]
+- [**Creplet Yanis**]
 - [**Gauffeny Paul**]
 - [**Desbrousses Victor**]
 - [**Tucat Mathieu**]

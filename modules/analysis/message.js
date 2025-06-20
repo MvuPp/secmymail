@@ -88,7 +88,7 @@ class MessageAnalyzer {
                 date: messageHeader.date,
                 size: messageHeader.size,
                 content: {
-                    body: bodyData.body || "Mail vide", // Pour compatibilité
+                    body: bodyData.body || "Mail vide",
                     text: bodyData.textContent,
                     html: bodyData.htmlContent,
                     full: bodyData.fullContent
