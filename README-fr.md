@@ -82,7 +82,7 @@ Une fois l’extension activée :
 
 #### Supprimer une donnée de la whitelist
 
-- Passez la souris sur une entrée existante et cliquez sur la croix rouge.
+- Cliquez sur la poubelle à côté du domaine ou du l'e-mail concerné pour le supprimer.
 
 ---
 
@@ -99,7 +99,7 @@ Une fois l’extension activée :
 
 #### Supprimer une donnée
 
-- Passez la souris sur une entrée existante et cliquez sur la croix rouge.
+- Cliquez sur la poubelle à côté du domaine ou du l'e-mail concerné pour le supprimer.
 
 ---
 
@@ -112,23 +112,24 @@ Une fois l’extension activée :
 #### Activer/Désactiver un tag
 
 1. Cliquez sur le bouton correspondant au tag.
-2. Le bouton devient vert si le tag est activé, rouge s’il est désactivé.
+2. Le bouton devient blanc sur fond vert si le tag est activé, et blanc sur fond gris s’il est désactivé.
 
 #### Activer le déplacement automatique des mails
 
-1. Cliquez sur le bouton près de **Déplacement des mails**.
-2. Vert = Activé, Rouge = Désactivé.
+1. Cliquez sur le bouton près de **Activer le déplacement automatique**.
+2. Vert = Activé, Gris = Désactivé.
 
 #### Changer la couleur des tags
 
-1. Allez dans **Gestion des tags** > **Changer les couleurs**.
-2. Sélectionnez la couleur à modifier et choisissez une nouvelle couleur.
+1. Allez dans **Gestion des tags**.
+2. Plusieurs catégories de tags sont disponibles : **Expéditeur**, **Fichiers**, **Liens**.
+3. Pour changer la couleur d'un tag, cliquez sur la couleur de la ligne correspondante puis sélectionnez la nouvelle couleur.
 
 ---
 
 ## Notes
 
-- N'hésitez pas à consulter l'interface utilisateur pour explorer d'autres options disponibles.
+- N'hésitez pas à consulter le manuel d'utilisation pour explorer d'autres options disponibles.
 
 ---
 
@@ -139,7 +140,7 @@ Pour toute assistance, contactez https://github.com/MvuPp/secmymail/issues.
 ## Auteurs
 
 - [**MvuPp**]
-- [**Schell Yanis**]
+- [**Creplet Yanis**]
 - [**Gauffeny Paul**]
 - [**Desbrousses Victor**]
 - [**Tucat Mathieu**]
