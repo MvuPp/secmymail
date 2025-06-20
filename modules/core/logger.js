@@ -1,6 +1,5 @@
-import { storage } from './storage.js';
+import { storage, STORAGE_KEYS } from './storage.js';
 
-const LOG_STORAGE_KEY = "secmymail_logs";
 const LOG_MAX_DAYS = 30;
 
 function getToday() {
@@ -9,7 +8,7 @@ function getToday() {
 }
 
 async function loadLogs() {
-    const logs = await storage.get(LOG_STORAGE_KEY, {});
+    let logs = await storage.get(STORAGE_KEYS.LOGS, {});
     // Nettoyage des logs de plus de 30 jours
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - LOG_MAX_DAYS);
@@ -18,12 +17,12 @@ async function loadLogs() {
             delete logs[day];
         }
     }
-    await storage.set(LOG_STORAGE_KEY, logs);
+    await storage.set(STORAGE_KEYS.LOGS, logs);
     return logs;
 }
 
 async function saveLogs(logs) {
-    await storage.set(LOG_STORAGE_KEY, logs);
+    await storage.set(STORAGE_KEYS.LOGS, logs);
 }
 
 export async function writeLog(type, source, info) {
@@ -40,11 +39,12 @@ export async function writeLog(type, source, info) {
 }
 
 export async function getAllLogs() {
-    return await loadLogs();
+    // Toujours récupérer les logs directement depuis le stockage sécurisé
+    return await storage.get(STORAGE_KEYS.LOGS, {});
 }
 
 export async function exportLogs() {
-    const logs = await getAllLogs();
+    const logs = await storage.get(STORAGE_KEYS.LOGS, {});
     let lines = [];
     
     // En-tête pour clarifier le format
@@ -52,7 +52,7 @@ export async function exportLogs() {
     lines.push("# Format: DATE,TYPE,SOURCE,DETAILS");
     lines.push("# Generated: " + new Date().toISOString());
     lines.push("");
-    //
+    
     // Traiter tous les logs par ordre chronologique
     Object.keys(logs).sort().forEach(day => {
         logs[day].forEach(entry => {
