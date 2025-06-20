@@ -1,5 +1,6 @@
 import { storage, STORAGE_KEYS } from './storage.js';
 import { folderManager } from './folders.js';
+import { writeLog } from './logger.js';
 
 /**
  * Module de déplacement automatique des messages
@@ -171,6 +172,7 @@ class AutoMoveManager {
         await this.incrementStats();
         
         console.log(`[AutoMoveManager] Message ${messageId} déplacé vers ${targetFolderName} (type: ${messageType})`);
+        writeLog('info', 'autoMove.js', `Message ${messageId} déplacé vers ${targetFolderName} (type: ${messageType})`);
         return true;
       } catch (folderError) {
         // Essai de méthode alternative si l'API folders n'est pas disponible ou échoue

@@ -12,7 +12,8 @@ const STORAGE_KEYS = {
   APP_SETTINGS: 'appSettings',
   AUTO_MOVE_OPTIONS: 'autoMoveOptions',
   AUTO_MOVE_STATS: 'autoMoveStats',
-  ADDRESS_BOOK_SYNC: 'addressBookSync'
+  ADDRESS_BOOK_SYNC: 'addressBookSync',
+  LOGS: 'logs'
 };
 
 class StorageManager {

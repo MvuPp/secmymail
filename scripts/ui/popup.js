@@ -1,3 +1,4 @@
+import { writeLog } from "../../modules/core/logger.js";
 /**
  * Interface principale du popup
  */
@@ -15,8 +16,10 @@ class PopupUI {
       await this.loadStats();
       this.updateDisplay();
       console.log('[PopupUI] Interface initialisée');
+      writeLog('info', 'popup.js', 'Interface popup initialisée avec succès');
     } catch (error) {
       console.error('[PopupUI] Erreur initialisation:', error);
+      writeLog('error', 'popup.js', `Erreur lors de l'initialisation de l'interface: ${error.message}`);
     }
   }
 
@@ -55,6 +58,7 @@ class PopupUI {
       }
     } catch (error) {
       console.error('[PopupUI] Service worker inaccessible:', error);
+      writeLog('error', 'popup.js', `Erreur lors de la vérification du service worker: ${error.message}`);
       this.serviceWorkerStatus = 'Erreur';
     }
   }
@@ -73,6 +77,7 @@ class PopupUI {
       }
     } catch (error) {
       console.error('[PopupUI] Erreur chargement stats:', error);
+      writeLog('error', 'popup.js', `Erreur lors du chargement des statistiques: ${error.message}`);
     }
   }
 

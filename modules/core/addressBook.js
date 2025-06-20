@@ -3,6 +3,7 @@
  * Permet de récupérer les contacts et de les ajouter à la liste blanche
  */
 
+import { writeLog } from './logger.js';
 import { storage, STORAGE_KEYS } from './storage.js';
 
 /**
@@ -193,13 +194,16 @@ class AddressBookManager {
             if (addedCount > 0) {
             await storage.set(STORAGE_KEYS.EMAIL_WHITELIST, whitelist);
             console.log(`[AddressBookManager] ${addedCount} adresses ajoutées à la liste blanche`);
+            writeLog('info', 'addressBook.js', `${addedCount} adresses ajoutées à la liste blanche depuis le carnet d'adresses`);
             } else {
             console.log('[AddressBookManager] Aucune nouvelle adresse à ajouter');
+            writeLog('info', 'addressBook.js', 'Aucune nouvelle adresse à ajouter à la liste blanche');
             }
             
             return { added: addedCount, total: whitelist.length };
         } catch (error) {
             console.error('[AddressBookManager] Erreur ajout à la liste blanche:', error);
+            writeLog('error', 'addressBook.js', `Erreur lors de l'ajout à la liste blanche: ${error.message}`);
             return { added: 0, error: error.message };
         }
     }

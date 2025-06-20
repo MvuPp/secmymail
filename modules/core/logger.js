@@ -1,4 +1,5 @@
-const LOG_STORAGE_KEY = "secmymail_logs";
+import { storage, STORAGE_KEYS } from './storage.js';
+
 const LOG_MAX_DAYS = 30;
 
 function getToday() {
@@ -6,8 +7,8 @@ function getToday() {
     return d.toISOString().slice(0, 10);
 }
 
-function loadLogs() {
-    const logs = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || "{}");
+async function loadLogs() {
+    let logs = await storage.get(STORAGE_KEYS.LOGS, {});
     // Nettoyage des logs de plus de 30 jours
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - LOG_MAX_DAYS);
@@ -16,16 +17,16 @@ function loadLogs() {
             delete logs[day];
         }
     }
-    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs));
+    await storage.set(STORAGE_KEYS.LOGS, logs);
     return logs;
 }
 
-function saveLogs(logs) {
-    localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs));
+async function saveLogs(logs) {
+    await storage.set(STORAGE_KEYS.LOGS, logs);
 }
 
-export function writeLog(type, source, info) {
-    const logs = loadLogs();
+export async function writeLog(type, source, info) {
+    const logs = await loadLogs();
     const today = getToday();
     if (!logs[today]) logs[today] = [];
     logs[today].push({
@@ -34,15 +35,16 @@ export function writeLog(type, source, info) {
         source,
         info
     });
-    saveLogs(logs);
+    await saveLogs(logs);
 }
 
-export function getAllLogs() {
-    return loadLogs();
+export async function getAllLogs() {
+    // Toujours récupérer les logs directement depuis le stockage sécurisé
+    return await storage.get(STORAGE_KEYS.LOGS, {});
 }
 
-export function exportLogs() {
-    const logs = getAllLogs();
+export async function exportLogs() {
+    const logs = await storage.get(STORAGE_KEYS.LOGS, {});
     let lines = [];
     
     // En-tête pour clarifier le format

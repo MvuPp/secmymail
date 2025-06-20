@@ -67,7 +67,7 @@ class EmailChecker {
 
     } catch (error) {
       console.error('[EmailChecker] Erreur vérification email:', error);
-      return 0; // En cas d'erreur, considérer comme inconnu
+      return 0;
     }
   }
 
