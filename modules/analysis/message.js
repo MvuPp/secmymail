@@ -135,7 +135,7 @@ class MessageAnalyzer {
             const expediteurStatus = await emailChecker.checkEmail(emailDetails.expediteur.email);
 
             let expediteurValue = expediteurStatus;
-            let liensValue = this.convertRiskToValue(linkAnalysis.risk);
+            let liensValue = linkAnalysis.status;
             let fichiersValue = this.convertRiskToValue(emailDetails.attachments.analysis.risk);
 
             const result = {
@@ -185,6 +185,8 @@ class MessageAnalyzer {
             case 'medium':
                 return 0;  // Suspect
             case 'low':
+                return 0;  // Potentiellement sûr
+            case 'safe':
             case 'none':
                 return 1;  // Sûr
             default:

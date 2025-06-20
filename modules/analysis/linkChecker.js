@@ -1,8 +1,5 @@
 import { storage, STORAGE_KEYS } from '../core/storage.js';
 
-/**
- * Module de vérification des liens
- */
 class LinkChecker {
     constructor() {
         this.suspiciousDomains = [
@@ -22,121 +19,140 @@ class LinkChecker {
             'r': ['г', 'ρ', 'ʁ'], 's': ['ѕ', 'σ', '$'], 't': ['т', 'τ', '†'],
             'v': ['ν', 'ѵ', '√'], 'w': ['ԝ', 'ω', 'ῳ'], 'z': ['ᴢ', 'ζ', '2']
         };
-
-        // Ajouter les listes personnalisées
-        this.whiteListDomains = [];
-        this.blackListDomains = [];
-        this.whiteListKey = STORAGE_KEYS.DOMAIN_WHITELIST;
-        this.blackListKey = STORAGE_KEYS.DOMAIN_BLACKLIST;
-        
-        // Charger les listes au démarrage
-        this.loadCustomLists();
     }
-    
-    /**
-     * Charge les listes personnalisées depuis le storage
-     */
-    async loadCustomLists() {
+
+    async getDomainLists() {
         try {
-            // Utiliser le gestionnaire de storage centralisé au lieu de browser.storage.sync
-            const whiteListDomains = await storage.get(this.whiteListKey, []);
-            const blackListDomains = await storage.get(this.blackListKey, []);
+            const keys = ['domainWhitelist', 'domainBlacklist'];
+            const stored = await browser.storage.local.get(keys);
             
-            this.whiteListDomains = Array.isArray(whiteListDomains) ? whiteListDomains : [];
-            this.blackListDomains = Array.isArray(blackListDomains) ? blackListDomains : [];
+            const lists = {
+                whiteList: stored.domainWhitelist || [],
+                blackList: stored.domainBlacklist || []
+            };
             
-            console.log(`[LinkChecker] Listes chargées: ${this.whiteListDomains.length} blancs, ${this.blackListDomains.length} noirs`);
+            console.log(`[LinkChecker] Listes domaines récupérées:`, {
+                whiteList: lists.whiteList.length,
+                blackList: lists.blackList.length
+            });
+            
+            if (lists.whiteList.length > 0) {
+                console.log(`[LinkChecker] Liste blanche:`, lists.whiteList);
+            }
+            if (lists.blackList.length > 0) {
+                console.log(`[LinkChecker] Liste noire:`, lists.blackList);
+            }
+            
+            return lists;
+            
         } catch (error) {
-            console.error('[LinkChecker] Erreur chargement listes:', error);
-            this.whiteListDomains = [];
-            this.blackListDomains = [];
+            console.error(`[LinkChecker] Erreur récupération listes domaines:`, error);
+            return {
+                whiteList: [],
+                blackList: []
+            };
         }
     }
     
-    /**
-     * Analyse les liens dans un message avec extraction complète
-     */
     async analyzeLinks(content, htmlContent = '') {
+        console.log(`[LinkChecker] Début analyse des liens`);
+        
         if (!content && !htmlContent) {
+            console.log(`[LinkChecker] Aucun contenu à analyser`);
             return {
                 count: 0,
                 status: 0,
                 risk: 'none',
-                links: [],
                 domains: []
             };
         }
 
-        // Combiner le contenu texte et HTML
         const fullContent = `${content || ''} ${htmlContent || ''}`;
         
-        // Extraire les liens et domaines
-        const extracted = this.extractLinks(fullContent);
+        const domains = this.extractDomains(fullContent);
+        console.log(`[LinkChecker] Domaines extraits:`, domains);
         
-        if (extracted.urls.length === 0 && extracted.domains.length === 0) {
+        if (domains.length === 0) {
+            console.log(`[LinkChecker] Aucun domaine trouvé dans le contenu`);
             return {
                 count: 0,
                 status: 0,
                 risk: 'none', 
-                links: [],
                 domains: []
             };
         }
 
-        const analyzedLinks = [];
         const analyzedDomains = [];
-        let overallRisk = 0;
+        const domainScores = [];
 
-        // Analyser les URLs complètes
-        for (const url of extracted.urls) {
-            const analysis = await this.analyzeLink(url);
-            analyzedLinks.push(analysis);
-
-            // Déterminer le risque global
-            if (analysis.risk === 'high') {
-                overallRisk = -1; // Dangereux
-            } else if (analysis.risk === 'medium' && overallRisk === 0) {
-                overallRisk = 1; // Suspect
-            }
-        }
-
-        // Analyser les domaines extraits
-        for (const domain of extracted.domains) {
+        for (const domain of domains) {
             const analysis = await this.analyzeDomainOnly(domain);
             analyzedDomains.push(analysis);
 
-            // Déterminer le risque global
-            if (analysis.risk === 'high') {
-                overallRisk = -1; // Dangereux
-            } else if (analysis.risk === 'medium' && overallRisk === 0) {
-                overallRisk = 1; // Suspect
-            }
+            const domainScore = this.convertRiskToScore(analysis.risk);
+            domainScores.push(domainScore);
+            console.log(`[LinkChecker] Score domaine ${domain}: ${analysis.risk} -> ${domainScore}`);
         }
 
-        // Appliquer la logique de comparaison des listes
-        const listComparison = await this.compareLinks(extracted.domains);
-        if (listComparison === -1) {
-            overallRisk = -1; // Au moins un domaine en liste noire
-        } else if (listComparison === 1 && overallRisk === 0) {
-            // Tous les domaines sont en liste blanche
-            overallRisk = 0; // Garder comme sûr
-        }
+        const finalScore = this.calculateFinalScore(domainScores);
+        console.log(`[LinkChecker] Score final calculé: ${finalScore} (risk: ${this.getRiskLevel(finalScore)})`);
+        console.log(`[LinkChecker] Détail scores:`, domainScores);
 
-        return {
-            count: extracted.urls.length + extracted.domains.length,
-            status: overallRisk,
-            risk: this.getRiskLevel(overallRisk),
-            links: analyzedLinks,
+        const result = {
+            count: domains.length,
+            status: finalScore,
+            risk: this.getRiskLevel(finalScore),
             domains: analyzedDomains,
-            summary: this.generateSummary(analyzedLinks, analyzedDomains)
+            summary: this.generateSummary(analyzedDomains),
+            domainScores: domainScores
         };
+
+        console.log(`[LinkChecker] Analyse terminée:`, {
+            count: result.count,
+            status: result.status,
+            risk: result.risk,
+            summary: result.summary
+        });
+
+        return result;
+    }
+    
+    convertRiskToScore(risk) {
+        switch(risk) {
+            case 'high':
+                return -1;
+            case 'medium':
+                return 0;
+            case 'low':
+            case 'none':
+                return 1;
+            default:
+                return 0;
+        }
+    }
+    
+    calculateFinalScore(domainScores) {
+        if (domainScores.length === 0) {
+            return 0;
+        }
+    
+        if (domainScores.includes(-1)) {
+            return -1;
+        }
+    
+        if (domainScores.every(score => score === 1)) {
+            return 1;
+        }
+    
+        if (domainScores.every(score => score === 0)) {
+            return 0;
+        }
+    
+        return 0;
     }
 
-    /**
-     * Extrait les domaines du contenu (sans protocole)
-     */
     extractDomains(content) {
-        const domainRegex = /(?:^|\s|[^a-zA-Z0-9.-])([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,})(?:[^a-zA-Z0-9.-]|$)/g;
+        const domainRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,})/g;
         const domains = new Set();
         let match;
 
@@ -150,18 +166,14 @@ class LinkChecker {
         return Array.from(domains);
     }
 
-    /**
-     * Valide qu'une chaîne est un domaine valide
-     */
     isValidDomain(domain) {
         const domainPattern = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
         return domainPattern.test(domain) && !domain.includes('..') && domain.length <= 253;
     }
 
-    /**
-     * Analyse un domaine seul (sans URL complète)
-     */
     async analyzeDomainOnly(domain) {
+        console.log(`[LinkChecker] Début analyse domaine: ${domain}`);
+        
         const analysis = {
             domain: domain,
             type: 'domain',
@@ -170,330 +182,173 @@ class LinkChecker {
             recommendations: []
         };
 
-        // Vérifier les listes personnalisées en premier
         await this.checkCustomLists(analysis);
         if (analysis.risk === 'high' || analysis.risk === 'low') {
-            return analysis; // Stop si déjà déterminé par les listes
+            console.log(`[LinkChecker] Analyse terminée par listes personnalisées: ${domain} -> ${analysis.risk}`);
+            return analysis;
         }
 
-        // Analyse du domaine
+        console.log(`[LinkChecker] Analyse heuristique pour: ${domain}`);
         this.analyzeDomain(analysis);
+        
+        console.log(`[LinkChecker] Résultat final pour ${domain}:`, {
+            risk: analysis.risk,
+            raisons: analysis.reasons,
+            recommendations: analysis.recommendations
+        });
 
         return analysis;
     }
 
-    /**
-     * Extrait les liens d'un contenu (basé sur liens.js mais amélioré)
-     */
-    extractLinks(content) {
-        // Pattern principal pour les URLs complètes et domaines
-        const urlRegex = /(?:(?:https?:\/\/)?(?:www\.)?)([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?:\/[^\s]*)?/g;
-        
-        // Patterns additionnels pour différents types de liens
-        const linkPatterns = [
-            // URLs complètes
-            /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi,
-            // URLs sans protocole (commençant par www)
-            /www\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}[^\s<>"{}|\\^`[\]]*[/\w]/gi,
-            // URLs dans les attributs HTML
-            /(?:href|src)=["']([^"']+)["']/gi
-        ];
-
-        const links = new Set();
-        const domains = new Set();
-
-        // Extraire les domaines avec le pattern principal
-        let match;
-        while ((match = urlRegex.exec(content)) !== null) {
-            domains.add(match[1].toLowerCase());
-        }
-
-        // Extraire les URLs complètes
-        for (const pattern of linkPatterns) {
-            const matches = content.match(pattern) || [];
-            for (let matchStr of matches) {
-                // Nettoyer le match
-                if (matchStr.includes('href=') || matchStr.includes('src=')) {
-                    const urlMatch = matchStr.match(/["']([^"']+)["']/);
-                    if (urlMatch) {
-                        matchStr = urlMatch[1];
-                    }
-                }
-                
-                // Ajouter le protocole si manquant
-                if (matchStr.startsWith('www.')) {
-                    matchStr = 'https://' + matchStr;
-                }
-                
-                try {
-                    const url = new URL(matchStr);
-                    links.add(url);
-                    domains.add(url.hostname.toLowerCase());
-                } catch (error) {
-                    // URL invalide = ignorer
-                }
-            }
-        }
-
-        return {
-            urls: Array.from(links),
-            domains: Array.from(domains)
-        };
-    }
-
-    /**
-     * Compare avec la liste blanche (basé sur liens.js)
-     */
     async compareWhiteList(domain) {
-        await this.loadCustomLists(); // Recharger pour avoir les dernières données
-        return this.whiteListDomains.some(item => domain === item || domain.endsWith('.' + item));
+        const lists = await this.getDomainLists();
+        const isWhitelisted = lists.whiteList.some(item => domain === item || domain.endsWith('.' + item));
+        console.log(`[LinkChecker] Comparaison whitelist ${domain}:`, isWhitelisted);
+        return isWhitelisted;
     }
 
-    /**
-     * Compare avec la liste noire (basé sur liens.js)
-     */
     async compareBlackList(domain) {
-        await this.loadCustomLists(); // Recharger pour avoir les dernières données
-        return this.blackListDomains.some(item => domain === item || domain.endsWith('.' + item));
+        const lists = await this.getDomainLists();
+        const isBlacklisted = lists.blackList.some(item => domain === item || domain.endsWith('.' + item));
+        console.log(`[LinkChecker] Comparaison blacklist ${domain}:`, isBlacklisted);
+        return isBlacklisted;
     }
 
-    /**
-     * Compare les liens avec les listes (basé sur liens.js)
-     */
     async compareLinks(domains) {
-        // S'assurer que les listes sont à jour
-        await this.loadCustomLists();
-        
-        // Si aucun domaine à vérifier
         if (!domains || domains.length === 0) {
             return 0;
         }
         
+        const lists = await this.getDomainLists();
+        
         let allWhitelisted = true;
         
         for (let domain of domains) {
-            // Vérifier d'abord la liste noire (prioritaire)
-            const isBlackListed = this.blackListDomains.some(item => 
+            const isBlackListed = lists.blackList.some(item => 
                 domain === item || domain.endsWith('.' + item)
             );
             
             if (isBlackListed) {
-                return -1; // Retourner immédiatement -1 si un domaine est en liste noire
+                console.log(`[LinkChecker] Domaine blacklisté trouvé: ${domain}`);
+                return -1;
             }
             
-            // Vérifier la liste blanche
-            const isWhiteListed = this.whiteListDomains.some(item => 
+            const isWhiteListed = lists.whiteList.some(item => 
                 domain === item || domain.endsWith('.' + item)
             );
             
             if (!isWhiteListed) {
                 allWhitelisted = false;
+            } else {
+                console.log(`[LinkChecker] Domaine whitelisté trouvé: ${domain}`);
             }
         }
         
-        // Si tous les domaines sont en liste blanche, retourner 1
         if (allWhitelisted && domains.length > 0) {
+            console.log(`[LinkChecker] Tous les domaines sont whitelistés`);
             return 1;
         }
         
-        // Par défaut, retourner 0 (neutre)
+        console.log(`[LinkChecker] Domaines neutres (ni blacklistés ni tous whitelistés)`);
         return 0;
     }
 
-    /**
-     * Génère un résumé de l'analyse (amélioré)
-     */
-    generateSummary(links, domains = []) {
-        const totalCount = links.length + domains.length;
-        if (totalCount === 0) return 'Aucun lien détecté';
+    generateSummary(domains = []) {
+        const totalCount = domains.length;
+        if (totalCount === 0) return 'Aucun domaine détecté';
 
-        const highRiskCount = [...links, ...domains].filter(item => item.risk === 'high').length;
-        const mediumRiskCount = [...links, ...domains].filter(item => item.risk === 'medium').length;
+        const highRiskCount = domains.filter(item => item.risk === 'high').length;
+        const mediumRiskCount = domains.filter(item => item.risk === 'medium').length;
 
         if (highRiskCount > 0) {
-            return `${highRiskCount} lien(s) dangereux détecté(s) sur ${totalCount}`;
+            return `${highRiskCount} domaine(s) dangereux détecté(s) sur ${totalCount}`;
         } else if (mediumRiskCount > 0) {
-            return `${mediumRiskCount} lien(s) suspect(s) détecté(s) sur ${totalCount}`;
+            return `${mediumRiskCount} domaine(s) suspect(s) détecté(s) sur ${totalCount}`;
         } else {
-            return `${totalCount} lien(s) analysé(s), aucun risque détecté`;
+            return `${totalCount} domaine(s) analysé(s), aucun risque détecté`;
         }
     }
 
-    /**
-     * Analyse un lien individuel
-     */
-    async analyzeLink(url) {
-        const analysis = {
-            url: url.href,
-            domain: url.hostname,
-            protocol: url.protocol,
-            path: url.pathname,
-            risk: 'low',
-            reasons: [],
-            recommendations: []
-        };
-
-        // Vérifier les listes personnalisées en premier
-        await this.checkCustomLists(analysis);
-        if (analysis.risk === 'high') {
-            return analysis; // Stop si en liste noire
-        }
-
-        // Analyser les différents composants
-        this.analyzeProtocol(analysis);
-        this.analyzeDomain(analysis);
-        this.analyzeUrl(analysis);
-        this.analyzeParameters(analysis, url);
-
-        return analysis;
-    }
-
-    /**
-     * Vérifie contre les listes personnalisées (mise à jour)
-     */
     async checkCustomLists(analysis) {
         const domain = analysis.domain;
 
-        // Vérifier la blacklist (priorité)
-        if (await this.compareBlackList(domain)) {
+        console.log(`[LinkChecker] Vérification domaine: ${domain}`);
+        
+        const lists = await this.getDomainLists();
+
+        const isBlacklisted = lists.blackList.some(item => domain === item || domain.endsWith('.' + item));
+        console.log(`[LinkChecker] Blacklist check pour ${domain}:`, isBlacklisted);
+        
+        if (isBlacklisted) {
             analysis.risk = 'high';
             analysis.reasons.push('Domaine dans la liste noire personnalisée');
             analysis.recommendations.push('Ne pas cliquer sur ce lien');
+            console.log(`[LinkChecker] DOMAINE BLACKLISTÉ: ${domain} -> risk: high`);
             return;
         }
 
-        // Vérifier la whitelist
-        if (await this.compareWhiteList(domain)) {
+        const isWhitelisted = lists.whiteList.some(item => domain === item || domain.endsWith('.' + item));
+        console.log(`[LinkChecker] Whitelist check pour ${domain}:`, isWhitelisted);
+        
+        if (isWhitelisted) {
             analysis.risk = 'low';
             analysis.reasons.push('Domaine dans la liste blanche personnalisée');
+            console.log(`[LinkChecker] DOMAINE WHITELISTÉ: ${domain} -> risk: low`);
             return;
         }
+        
+        console.log(`[LinkChecker] Domaine ${domain} non trouvé dans les listes personnalisées -> Analyse par défaut`);
     }
 
-    /**
-     * Analyse le domaine
-     */
     analyzeDomain(analysis) {
         const domain = analysis.domain;
+        console.log(`[LinkChecker] Tests heuristiques sur: ${domain}`);
 
-        // Vérifier les domaines de raccourcissement d'URL
         if (this.suspiciousDomains.includes(domain)) {
             analysis.risk = 'medium';
             analysis.reasons.push('Service de raccourcissement d\'URL');
             analysis.recommendations.push('Vérifier la destination réelle avant de cliquer');
+            console.log(`[LinkChecker] Domaine de raccourcissement détecté: ${domain}`);
         }
 
-        // Vérifier les TLD dangereux
         for (const tld of this.dangerousTlds) {
             if (domain.endsWith(tld)) {
                 analysis.risk = 'high';
                 analysis.reasons.push(`Extension de domaine suspecte (${tld})`);
                 analysis.recommendations.push('Éviter ce lien');
+                console.log(`[LinkChecker] TLD dangereux détecté: ${domain} (${tld})`);
                 break;
             }
         }
 
-        // Vérifier les caractères homographes
         if (this.containsHomographs(domain)) {
             analysis.risk = 'high';
             analysis.reasons.push('Caractères suspects détectés (possible typosquatting)');
             analysis.recommendations.push('Vérifier attentivement le nom de domaine');
+            console.log(`[LinkChecker] Caractères homographes détectés: ${domain}`);
         }
 
-        // Vérifier la longueur excessive
         if (domain.length > 50) {
             analysis.risk = 'medium';
             analysis.reasons.push('Nom de domaine inhabituellement long');
+            console.log(`[LinkChecker] Domaine long détecté: ${domain} (${domain.length} chars)`);
         }
 
-        // Vérifier les patterns suspects
         if (/\d{4,}/.test(domain)) {
             analysis.risk = 'medium';
             analysis.reasons.push('Domaine contenant beaucoup de chiffres');
+            console.log(`[LinkChecker] Nombreux chiffres détectés: ${domain}`);
         }
 
         if (/-{2,}/.test(domain)) {
             analysis.risk = 'medium';
             analysis.reasons.push('Domaine avec tirets multiples');
+            console.log(`[LinkChecker] Tirets multiples détectés: ${domain}`);
         }
+
+        console.log(`[LinkChecker] Tests heuristiques terminés pour: ${domain} -> ${analysis.risk}`);
     }
 
-    /**
-     * Analyse l'URL complète
-     */
-    analyzeUrl(analysis) {
-        const url = analysis.url;
-
-        // Vérifier les URLs très longues
-        if (url.length > 200) {
-            analysis.risk = 'medium';
-            analysis.reasons.push('URL inhabituellement longue');
-        }
-
-        // Vérifier les caractères encodés suspects
-        if (/%[0-9a-f]{2}/gi.test(url)) {
-            const decodedUrl = decodeURIComponent(url);
-            if (decodedUrl !== url && /[<>"'&]/.test(decodedUrl)) {
-                analysis.risk = 'high';
-                analysis.reasons.push('URL contient des caractères encodés suspects');
-            }
-        }
-
-        // Vérifier les extensions de fichiers dans l'URL
-        const suspiciousExtensions = /\.(exe|bat|com|scr|pif|vbs|js)(\?|$)/i;
-        if (suspiciousExtensions.test(url)) {
-            analysis.risk = 'high';
-            analysis.reasons.push('URL pointe vers un fichier potentiellement dangereux');
-        }
-    }
-
-    /**
-     * Analyse le protocole
-     */
-    analyzeProtocol(analysis) {
-        if (analysis.protocol === 'http:') {
-            analysis.risk = 'medium';
-            analysis.reasons.push('Connexion non sécurisée (HTTP)');
-            analysis.recommendations.push('Préférer les sites HTTPS');
-        }
-
-        if (!['http:', 'https:', 'ftp:', 'ftps:'].includes(analysis.protocol)) {
-            analysis.risk = 'high';
-            analysis.reasons.push(`Protocole inhabituel (${analysis.protocol})`);
-        }
-    }
-
-    /**
-     * Analyse les paramètres URL
-     */
-    analyzeParameters(analysis, url) {
-        const params = url.searchParams;
-        
-        // Vérifier les paramètres suspects
-        const suspiciousParams = ['cmd', 'exec', 'eval', 'system', 'shell'];
-        for (const param of params.keys()) {
-            if (suspiciousParams.includes(param.toLowerCase())) {
-                analysis.risk = 'high';
-                analysis.reasons.push(`Paramètre suspect détecté: ${param}`);
-                break;
-            }
-        }
-
-        // Vérifier les redirections multiples
-        const redirectParams = ['redirect', 'url', 'goto', 'link', 'target'];
-        for (const param of params.keys()) {
-            if (redirectParams.includes(param.toLowerCase())) {
-                analysis.risk = 'medium';
-                analysis.reasons.push('Possible redirection détectée');
-                analysis.recommendations.push('Vérifier la destination finale');
-                break;
-            }
-        }
-    }
-
-    /**
-     * Vérifie la présence de caractères homographes
-     */
     containsHomographs(domain) {
         for (const [latin, homographs] of Object.entries(this.homographChars)) {
             for (const homograph of homographs) {
@@ -505,17 +360,14 @@ class LinkChecker {
         return false;
     }
 
-    /**
-     * Détermine le niveau de risque
-     */
     getRiskLevel(status) {
-        if (status < 0) return 'high';
-        if (status > 0) return 'medium';
-        return 'low';
+        if (status === -1) return 'high';
+        if (status === 0) return 'medium';
+        if (status === 1) return 'low';
+        return 'none';
     }
 }
 
-// Instance singleton
 const linkChecker = new LinkChecker();
 
 export { linkChecker };
