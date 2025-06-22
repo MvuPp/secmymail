@@ -297,7 +297,10 @@ class LinkChecker {
             return;
         }
         
-        console.log(`[LinkChecker] Domaine ${domain} non trouvé dans les listes personnalisées -> Analyse par défaut`);
+        // Domaine non trouvé dans les listes personnalisées -> risque medium par défaut
+        analysis.risk = 'medium';
+        analysis.reasons.push('Domaine non référencé dans les listes personnalisées');
+        console.log(`[LinkChecker] Domaine ${domain} non trouvé dans les listes personnalisées -> risk: medium`);
     }
 
     analyzeDomain(analysis) {

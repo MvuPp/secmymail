@@ -185,10 +185,10 @@ class MessageAnalyzer {
             case 'medium':
                 return 0;  // Suspect
             case 'low':
-                return 0;  // Potentiellement sûr
+                return 1;  // Sûr (extensions sûres)
             case 'safe':
             case 'none':
-                return 1;  // Sûr
+                return 0;  // Aucune pièce jointe
             default:
                 return 0;  // Par défaut suspect
         }

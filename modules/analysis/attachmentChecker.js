@@ -56,18 +56,29 @@ class AttachmentChecker {
     }
 
     const results = [];
-    let overallRisk = 0;
+    let overallRisk = 1; // Par défaut sûr si toutes les extensions sont sûres
+    let hasSafeExtensions = false;
 
     for (const attachment of attachments) {
       const analysis = await this.analyzeAttachment(attachment);
       results.push(analysis);
 
+      // Vérifier si on a des extensions sûres
+      if (analysis.risk === 'low') {
+        hasSafeExtensions = true;
+      }
+
       // Déterminer le risque global
       if (analysis.risk === 'high') {
         overallRisk = -1; // Dangereux
-      } else if (analysis.risk === 'medium' && overallRisk === 0) {
-        overallRisk = 1; // Suspect mais pas dangereux
+      } else if (analysis.risk === 'medium' && overallRisk !== -1) {
+        overallRisk = 0; // Suspect
       }
+    }
+
+    // Si on a que des extensions sûres, on garde le status à 1
+    if (hasSafeExtensions && overallRisk !== -1 && overallRisk !== 0) {
+      overallRisk = 1;
     }
 
     return {
@@ -75,7 +86,8 @@ class AttachmentChecker {
       status: overallRisk,
       risk: this.getRiskLevel(overallRisk),
       details: results,
-      summary: this.generateSummary(results)
+      summary: this.generateSummary(results),
+      hasSafeExtensions: hasSafeExtensions
     };
   }
 
@@ -130,6 +142,22 @@ class AttachmentChecker {
   async analyzeExtension(analysis) {
     const ext = analysis.extension.toLowerCase();
 
+    // Vérifier d'abord les listes personnalisées (priorité)
+    const customDangerous = await storage.get('dangerousExtensions', []);
+    const customSafe = await storage.get('safeExtensions', []);
+
+    if (customDangerous.includes(ext)) {
+      analysis.risk = 'high';
+      analysis.reasons.push('Extension dans la liste noire personnalisée');
+      analysis.recommendations.push('Ne pas ouvrir ce fichier');
+      return;
+    } else if (customSafe.includes(ext)) {
+      analysis.risk = 'low';
+      analysis.reasons.push('Extension dans la liste blanche personnalisée');
+      return;
+    }
+
+    // Ensuite vérifier les listes par défaut
     if (this.dangerousExtensions.includes(ext)) {
       analysis.risk = 'high';
       analysis.reasons.push(`Extension dangereuse: .${ext}`);
@@ -139,23 +167,12 @@ class AttachmentChecker {
       analysis.reasons.push(`Extension suspecte: .${ext}`);
       analysis.recommendations.push('Vérifier le contenu avant ouverture');
     } else if (this.safeExtensions.includes(ext)) {
+      analysis.risk = 'low';
       analysis.reasons.push(`Extension sûre: .${ext}`);
     } else {
       analysis.risk = 'medium';
       analysis.reasons.push(`Extension inconnue: .${ext}`);
       analysis.recommendations.push('Extension non reconnue, prudence recommandée');
-    }
-
-    // Vérifier contre les listes personnalisées
-    const customDangerous = await storage.get('dangerousExtensions', []);
-    const customSafe = await storage.get('safeExtensions', []);
-
-    if (customDangerous.includes(ext)) {
-      analysis.risk = 'high';
-      analysis.reasons.push('Extension dans la liste noire personnalisée');
-    } else if (customSafe.includes(ext)) {
-      analysis.risk = 'low';
-      analysis.reasons.push('Extension dans la liste blanche personnalisée');
     }
   }
 
@@ -315,8 +332,8 @@ class AttachmentChecker {
   getRiskLevel(status) {
     switch (status) {
       case -1: return 'high';
-      case 1: return 'medium';
-      case 0: return 'low';
+      case 0: return 'medium';
+      case 1: return 'low';
       default: return 'unknown';
     }
   }
