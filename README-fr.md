@@ -20,7 +20,7 @@
 
 ## Installation
 
-1. Téléchargez la dernière release depuis la [page des releases](https://github.com/MvuPp/secmymail/-/releases)
+1. Téléchargez la dernière release depuis la [page des releases](https://github.com/MvuPp/secmymail/releases)
 2. Allez dans `Add-ons et thèmes` dans les paramètres de Thunderbird.
 3. Glissez y le fichier `secmymail.xpi`.
 
@@ -29,14 +29,15 @@
 1. Clonez le dépôt :
 
    ```bash
-   git clone https://github.com/MvuPp/secmymail
+   git clone https://github.com/MvuPp/secmymail.git
    cd secmymail
    ```
 
 2. Exécutez le script de compilation :
 
    ```bash
-   ./build.sh
+   ./build.sh      # Linux / macOS
+   build.bat       # Windows
    ```
 
 3. Le fichier `secmymail.xpi` sera généré dans le répertoire `build`.
@@ -135,12 +136,14 @@ Une fois l’extension activée :
 
 ## Support
 
-Pour toute assistance, contactez https://github.com/MvuPp/secmymail/issues.
+Pour toute question, ouvrez une [issue](https://github.com/MvuPp/secmymail/issues).
 
 ## Auteurs
 
-- [**MvuPp**]
-- [**Creplet Yanis**]
-- [**Gauffeny Paul**]
-- [**Desbrousses Victor**]
-- [**Tucat Mathieu**]
+Projet réalisé à l'ENSIBS (Université Bretagne Sud) par :
+
+- [@MvuPp](https://github.com/MvuPp)
+- Creplet Yanis
+- Gauffeny Paul
+- Desbrousses Victor
+- Tucat Mathieu

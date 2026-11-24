@@ -1,1 +1,13 @@
-build/*
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editeurs
+.vscode/
+.idea/
+
+# Divers
+*.bundle
+node_modules/
